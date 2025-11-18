@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Better bateworld.com
-// @namespace   My Violentmonkey Scripts
+// @namespace   Circlejerk Scripts
 // @match       https://bateworld.com//html5-chat/chat2/*
 // @grant       GM_addStyle
 // @grant       GM_getValue
@@ -11,6 +11,7 @@
 // @version     1.0
 // @author      -
 // @description 21/10/2025, 20:41:33
+// @license GPL-3.0-or-later
 // ==/UserScript==
 
 
@@ -49,10 +50,10 @@ GM_addStyle(`
     background: #111;
 }
 
-.jsPanel[data-status="--"] [data-status-value="--"] { background: rgba(230, 200, 170);}
-.jsPanel[data-status="-"] [data-status-value="-"] { background: rgba(220, 200, 200);}
-.jsPanel[data-status="+"] [data-status-value="+"] { background: rgba(170, 200, 230);}
-.jsPanel[data-status="++"] [data-status-value="++"] { background: rgba(150, 190, 250);}
+.jsPanel[data-status="--"] [data-status-value="--"] { background: rgba(230, 160, 140);}
+.jsPanel[data-status="-"] [data-status-value="-"] { background: rgba(238, 233, 200);}
+.jsPanel[data-status="+"] [data-status-value="+"] { background: rgba(120, 200, 230);}
+.jsPanel[data-status="++"] [data-status-value="++"] { background: rgba(100, 190, 250);}
 .jsPanel[data-status="undefined"] .jsPanel-title {
   text-decoration-color: orange;
   text-decoration-line: underline;
@@ -102,6 +103,8 @@ video.mobile.mobile {
 }
 `);
 
+/** @type {'' | 'new' | 'top'} */
+let algo = '';
 const dynamicStyle = GM_addStyle(getCSS());
 const dynamicOpenedStyle = GM_addStyle();
 
@@ -111,49 +114,54 @@ const PANEL_SELECTOR = '.jsPanel.jsPanel-theme-default';
 const PANEL_ACTIONS = [
   {
     icon: '--',
-    label: 'Fade',
-    handler: panel => {
-      const id = getUsername(panel);
-      panel.dataset.status = '--';
+    label: 'Off',
+    handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '--');
       dynamicStyle.innerHTML = getCSS();
+
+      if (!panel) return;
+      panel.dataset.status = '--';
+      jsPanel.activePanels.getPanel(panel.id)?.close();
     }
   },
   {
     icon: '-',
     label: 'Fade',
-    handler: panel => {
-      const id = getUsername(panel);
-      panel.dataset.status = '-';
+    handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '-');
       dynamicStyle.innerHTML = getCSS();
+
+      if (!panel) return;
+      panel.dataset.status = '-';
     }
   },
   {
     icon: '+',
     label: 'Good',
-    handler: panel => {
-      const id = getUsername(panel);
-      panel.dataset.status = '+';
+    handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '+');
       dynamicStyle.innerHTML = getCSS();
+
+      if (!panel) return;
+      panel.dataset.status = '+';
     }
   },
   {
     icon: '++',
-    label: 'Top',
-    handler: panel => {
-      const id = getUsername(panel);
-      panel.dataset.status = '++';
+    label: 'Great',
+    handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '++');
       dynamicStyle.innerHTML = getCSS();
+
+      if (!panel) return;
+      panel.dataset.status = '++';
     }
   },
   {
     icon: '⟳',
     label: 'Rotate',
-    handler: panel => {
-      const id = getUsername(panel);
+    handler: ({id, panel}) => {
+      if (!panel) return;
 
       const currentRotation = getRotation(panel);
       const newRotation = (currentRotation + 90) % 360;
@@ -162,7 +170,21 @@ const PANEL_ACTIONS = [
       GM_setValue(`${id}_rotation`, newRotation);
     }
   },
+  {
+    icon: '⏱',
+    label: 'Cooldown 15m',
+    handler: cooldownIt
+  },
 ].reverse();
+
+function cooldownIt({id, minutes = 15, panel}) {
+  const expiry = Date.now() + minutes * 60 * 1000;
+  setCooldown(id, expiry);
+  console.log(`User ${id} put on cooldown until`, new Date(expiry).toISOString());
+
+  if (!panel) return;
+  jsPanel.activePanels.getPanel(panel.id)?.close();
+};
 
 // Observe DOM for dynamic panels
 const observerPanels = new MutationObserver(mutations => {
@@ -182,7 +204,6 @@ const observerPanels = new MutationObserver(mutations => {
 
     // Handle removed nodes
     for (const node of mutation.removedNodes) {
-      console.log(node);
       if (!(node instanceof HTMLElement)) continue;
       const panels = node.matches(PANEL_SELECTOR)
         ? [node]
@@ -190,6 +211,11 @@ const observerPanels = new MutationObserver(mutations => {
       if (!panels.length) continue;
       panels.forEach(cleanupPanel);
       cleanupNeeded = true;
+      if (algo) {
+        setTimeout(() => {
+          document.querySelector(`button[data-sort-order="${algo}"]`)?.click();
+        }, 32);
+      }
     }
   }
 
@@ -216,7 +242,21 @@ function attachPanelActions(panel) {
   const actions = document.createElement('div');
   actions.className = 'panel-action';
 
-  PANEL_ACTIONS.forEach(action => {
+  getPanelActions({id, panel})
+    .forEach(action => actions.appendChild(action));
+
+  header.appendChild(actions);
+
+  panel.dataset.actionsAttached = '1';
+  panel.dataset.rotation = GM_getValue(`${id}_rotation`);
+
+  panel.querySelector('video').volume = 0.08;
+
+  panel.querySelector('.jsPanel-btn.jsPanel-btn-close')?.addEventListener('click', () => {cooldownIt({id, minutes: 1});});
+}
+
+function getPanelActions(data) {
+  return PANEL_ACTIONS.map(action => {
     const btn = document.createElement('button');
     btn.dataset.statusValue = action.icon;
     btn.textContent = action.icon;
@@ -224,17 +264,27 @@ function attachPanelActions(panel) {
     btn.className = 'panel-action-btn';
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      action.handler(panel);
+      action.handler(data);
     });
-    actions.appendChild(btn);
+    return btn;
   });
+}
 
-  header.appendChild(actions);
-
-  panel.dataset.actionsAttached = '1';
-  panel.dataset.rotation = GM_getValue(`${id}_rotation`);
-
-  panel.querySelector('video').volume = 0.1;
+function getMenuActions() {
+  return PANEL_ACTIONS
+    .filter(action => !['Rotate'].includes(action.label))
+    .map(action => {
+      const btn = document.createElement('button');
+      btn.dataset.statusValue = action.icon;
+      btn.textContent = action.icon;
+      btn.title = action.label;
+      btn.className = 'panel-action-btn';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        action.handler({ id: getLatestUser(), panel: null });
+      });
+      return btn;
+    });
 }
 
 function cleanupPanel(panel) {
@@ -308,6 +358,21 @@ ${groups['++'].map(dataUsername).join(',')}
   return css;
 }
 
+// Cooldown helpers: store expiry timestamps (ms since epoch) using GM_setValue
+function setCooldown(id, expiryMs) {
+  GM_setValue(`${id}_cooldown`, expiryMs);
+}
+
+function getCooldownExpiry(id) {
+  const val = GM_getValue(`${id}_cooldown`);
+  return val ? Number(val) : null;
+}
+
+function isOnCooldown(id) {
+  const expiry = getCooldownExpiry(id);
+  return expiry && Date.now() < expiry;
+}
+
 const topNewest = (a, b) => b.bias - a.bias || b.onlineSince - a.onlineSince;
 const topRandom = (a, b) => b.bias - a.bias || Math.random() - 0.5;
 
@@ -330,7 +395,10 @@ const getCandidates = (
   for (const /** @type {HTMLDivElement} */ item of userItems.values()) {
     const id = item.dataset.username.split('_')[0];
     const status = GM_getValue(`${id}_status`);
-    if (status === "--") continue;
+  // skip users explicitly faded out
+  if (status === "--") continue;
+  // skip users currently on cooldown
+  if (isOnCooldown(id)) continue;
 
     entries.push({
       item,
@@ -346,13 +414,14 @@ const getCandidates = (
   return entries;
 };
 
-function openCandidates(candidates) {
+function openCandidates(candidates, /** @type {number} */ limit) {
   const openedPanels = document.querySelectorAll(PANEL_SELECTOR);
   let openedCount = openedPanels.length || 0;
   if (openedCount >= 10) return console.log('10 panels already open');
+  const maxToOpen = limit ? Math.min(openedCount + limit, 10) : 10;
 
   const openedIds = new Set(Array.from(openedPanels).map(panel => getUsername(panel)));
-  while (openedCount < 10 && candidates.length > 0) {
+  while (openedCount < maxToOpen && candidates.length > 0) {
     const candidate = candidates.shift();
     if (openedIds.has(candidate.id)) continue;
 
@@ -366,7 +435,7 @@ function openCandidates(candidates) {
 function tryToOpenPanel(
   /** @type {{item: HTMLDivElement, id: string, status: string, bias: number, onlineSince: number}} */ candidate
 ) {
-  console.log('Trying to open panel for', candidate.id);
+  // console.log('Trying to open panel for', candidate.id);
   candidate.item.querySelector('.webcamBtn').click();
 }
 
@@ -375,34 +444,54 @@ function setupTools() {
 
   {
     const button = document.createElement('button');
-    button.textContent = 'Grid';
-    button.title = 'Organize open panels';
-    button.addEventListener('click', () => organizePanels());
+    button.textContent = 'ø';
+    button.title = 'Organize open panels and stop the algorithm';
+    button.addEventListener('click', () => {
+      organizePanels();
+      algo = '';
+    });
     header.prepend(button);
   }
 
   {
     const button = document.createElement('button');
     button.textContent = 'New';
+    button.dataset.sortOrder = 'new';
     button.title = 'Prioritize recently online';
-    button.addEventListener('click', () => openCandidates(getCandidates(topRandom, { [undefined]: 9, '+': 8 })));
+    button.addEventListener('click', () => {
+      algo = 'new';
+      openCandidates(getCandidates(topRandom, { [undefined]: 9, '+': 8 }));
+    });
     header.prepend(button);
   }
 
   {
     const button = document.createElement('button');
-    button.textContent = 'Top Rand';
+    button.textContent = 'Top';
+    button.dataset.sortOrder = 'top';
     button.title = 'Prioritize users, then randomize the order';
-    button.addEventListener('click', () => openCandidates(getCandidates(topRandom)));
+    button.addEventListener('click', () => {
+      algo = 'top';
+      openCandidates(getCandidates(topRandom));
+    });
     header.prepend(button);
   }
 
   chatHTML5.config['timeBeforeWatchingCamAgain'] = "1000";
   document.querySelector('#sortWebcamtBtn')?.click();
+
+  const userMenu = document.querySelector('#userMenu');
+  if (userMenu) getMenuActions().forEach(action => userMenu.appendChild(action));
+}
+
+function getLatestUser() {
+  const muteItem = document.querySelector('#userMenu [data-action="mute"]');
+  const username = muteItem.textContent.split(' ').at(-1).split('_').at(0);
+  return username;
 }
 
 const gapX = -5;
-const gapY = 0;
+const gapY = 5;
 const positions3x3plus1 = [
   () => ({ my: 'right-top', at: 'right-top', offsetX: -5, offsetY: 50 }),
   (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[0], offsetY: gapY }),
@@ -438,7 +527,7 @@ function organizePanels(positions = positions3x3plus1) {
       positionedPanels[placementIndex] = panel;
       panelDOM.dataset.gridIndex = placementIndex;
 
-      panel.resize({ width: 365, height: 330 }).reposition(positionFn(positionedPanels));
+      panel.resize({ width: 365, height: 318 }).reposition(positionFn(positionedPanels));
       positionedPanels.push(panel);
     });
 
@@ -515,5 +604,3 @@ Promise.resolve()
     setupTools();
     openCandidates(getCandidates(topRandom));
   });
-
-console.log('=- Oi -----------------------------', new Date().toISOString().split('T')[1]);
