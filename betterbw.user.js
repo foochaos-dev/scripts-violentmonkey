@@ -296,10 +296,40 @@ function updateCssForOpenedPanels() {
 
   const usernames = Array.from(openedPanels).map(panel => getUsername(panel));
   dynamicOpenedStyle.innerHTML = `
-  #userList .userItem:where(
-  ${usernames.map(id => `[data-username="${id}"],[data-username^="${id}_"]`).join(',')}
-) .webcamBtn {
-  background: #50ce85 !important;
+.userItem:where(${usernames.map(dataUsername).join(',')}) {
+  #userList & .webcamBtn {
+    background: rgba(80, 206, 133, 1) !important;
+  }
+
+  #tabs &:before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 12px;
+    height: 11px;
+    top: 50%;
+    transform: translateY(-50%) translateX(-120%);
+    border-radius: 2px;
+    border: rgba(178, 178, 178, 1) solid 1px;
+    border-top-width: 3px;
+  }
+}
+
+${usernames.map(id =>
+  `body:has(#userList .userItem:where(${dataUsername(id)}) .eye-icon .isWatching) .jsPanel[data-username="${id}"]`
+).join(', ')}  {
+  box-shadow: rgba(255, 206, 50, 1) 0px 0px 2px 3px;
+  transition: box-shadow .2s ease-out;
+
+  & .jsPanel-title::before {
+    content: "👁️";
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    text-shadow: 0 0 4px rgba(0, 150, 100, 1);
+    font-size: 14px;
+  }
 }
 `;
 }
