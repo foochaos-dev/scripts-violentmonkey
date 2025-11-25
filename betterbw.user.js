@@ -8,7 +8,7 @@
 // @grant       GM_setValue
 // @grant       GM_setValues
 // @grant       GM_listValues
-// @version     1.0
+// @version     1.2.2
 // @author      -
 // @description 21/10/2025, 20:41:33
 // @license GPL-3.0-or-later
@@ -69,7 +69,7 @@ GM_addStyle(`
 
 .jsPanel:where([data-rotation=""],[data-rotation="0"]) video { rotate: 0deg; }
 .jsPanel[data-rotation="90"] video { rotate: 90deg; }
-.jsPanel[data-rotation="180"] video { transform: rotate(180deg); }
+.jsPanel[data-rotation="180"] video { rotate: 180deg; }
 .jsPanel[data-rotation="270"] video { rotate: 270deg; }
 
 #userList .userItem:has(i.lock.fa-lock) .userLabel {
@@ -506,29 +506,45 @@ const positions3x3plus1 = [
 ];
 
 function organizePanels(positions = positions3x3plus1) {
-  const openedPanels = document.querySelectorAll(PANEL_SELECTOR);
-  if (!openedPanels?.length) return;
+  const opened = Array.from(document.querySelectorAll(PANEL_SELECTOR));
+  if (!opened?.length) return;
 
-  const positionedPanels = Array(10).fill(null);
-  Array.from(openedPanels)
-    // bubble up panels that already have a position
-    .sort((a, b) => a.dataset.gridIndex ? -1 : b.dataset.gridIndex ? 1 : 0)
-    .forEach((panelDOM) => {
-      const panel = jsPanel.activePanels.getPanel(panelDOM.id);
+  const GRID_SIZE = 10;
+  const grid = Array(GRID_SIZE).fill(null);
 
-      if (panelDOM.dataset.gridIndex) {
-        positionedPanels[+panelDOM.dataset.gridIndex] = panel;
-        return;
-      }
+  // Split the opened panels in two groups
+  const groups = { prePositioned: [], newlyCreated: [] };
+  for (const panel of opened) {
+    const group = panel.dataset.gridIndex ? groups.prePositioned : groups.newlyCreated;
+    group.push(panel);
+  }
 
-      const placementIndex = positionedPanels.indexOf(null);
-      const positionFn = positions[placementIndex];
+  // Put the pre-positioned panels back on the same index
+  for (const panel of groups.prePositioned) {
+    if (grid[+panel.dataset.gridIndex]) {
+      groups.newlyCreated.unshift(panel);
+    } else {
+      grid[+panel.dataset.gridIndex] = panel;
+    }
+  }
+
+  for (const panel of groups.newlyCreated) {
+    const nextAvailableSlot = grid.indexOf(null);
+    if (nextAvailableSlot > -1) {
+      grid[nextAvailableSlot] = panel;
+      panel.dataset.gridIndex = nextAvailableSlot.toString();
+    }
+  }
+
+  grid
+    .map(panel => panel ? jsPanel.activePanels.getPanel(panel.id) : null)
+    .forEach((panel, idx, grid) => {
+      if (!panel) return;
+
+      const positionFn = positions[idx];
       if (!positionFn) return;
-      positionedPanels[placementIndex] = panel;
-      panelDOM.dataset.gridIndex = placementIndex;
 
-      panel.resize({ width: 365, height: 318 }).reposition(positionFn(positionedPanels));
-      positionedPanels.push(panel);
+      panel.resize({ width: 365, height: 318 }).reposition(positionFn(grid));
     });
 
 }
