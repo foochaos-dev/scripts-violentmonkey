@@ -8,7 +8,7 @@
 // @grant       GM_setValue
 // @grant       GM_setValues
 // @grant       GM_listValues
-// @version     1.2.2
+// @version     1.2.3
 // @author      -
 // @description 21/10/2025, 20:41:33
 // @license GPL-3.0-or-later
@@ -382,7 +382,7 @@ const getCandidates = (
   _biases = {}
 ) => {
   const biases = {
-    "--": 0,
+    // "--": 0,
     "-": 1,
     [undefined]: 2,
     "+": 3,
@@ -395,10 +395,10 @@ const getCandidates = (
   for (const /** @type {HTMLDivElement} */ item of userItems.values()) {
     const id = item.dataset.username.split('_')[0];
     const status = GM_getValue(`${id}_status`);
-  // skip users explicitly faded out
-  if (status === "--") continue;
-  // skip users currently on cooldown
-  if (isOnCooldown(id)) continue;
+    // skip users explicitly faded out
+    if (status === "--") continue;
+    // skip users currently on cooldown
+    if (isOnCooldown(id)) continue;
 
     entries.push({
       item,
@@ -490,19 +490,37 @@ function getLatestUser() {
   return username;
 }
 
-const gapX = -5;
-const gapY = 5;
+const base = { my: 'right-top', at: 'right-top' };
+const gridStyle = {
+  marginTop: 50,
+  marginRight: 5,
+  gapX: 5,
+  gapY: 5,
+  width: 365,
+  height: 318,
+};
+const col = [
+  - gridStyle.marginRight,
+  - (gridStyle.marginRight + gridStyle.width+gridStyle.gapX),
+  - (gridStyle.marginRight + (gridStyle.width+gridStyle.gapX) * 2),
+  - (gridStyle.marginRight + (gridStyle.width+gridStyle.gapX) * 3),
+];
+const row = [
+  gridStyle.marginTop,
+  gridStyle.marginTop + gridStyle.height + gridStyle.gapY,
+  gridStyle.marginTop + (gridStyle.height + gridStyle.gapY) * 2,
+];
 const positions3x3plus1 = [
-  () => ({ my: 'right-top', at: 'right-top', offsetX: -5, offsetY: 50 }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[0], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'left-top', of: grid[0], offsetX: gapX }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[2], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'left-top', of: grid[2], offsetX: gapX }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[4], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[1], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[3], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'right-bottom', of: grid[5], offsetY: gapY }),
-  (grid) => ({ my: 'right-top', at: 'left-top', of: grid[4], offsetX: gapX, offsetY: 65 }),
+  () => ({ ...base, offsetX: col[0], offsetY: row[0] }),
+  () => ({ ...base, offsetX: col[0], offsetY: row[1] }),
+  () => ({ ...base, offsetX: col[1], offsetY: row[0] }),
+  () => ({ ...base, offsetX: col[1], offsetY: row[1] }),
+  () => ({ ...base, offsetX: col[2], offsetY: row[0] }),
+  () => ({ ...base, offsetX: col[2], offsetY: row[1] }),
+  () => ({ ...base, offsetX: col[0], offsetY: row[2] }),
+  () => ({ ...base, offsetX: col[1], offsetY: row[2] }),
+  () => ({ ...base, offsetX: col[2], offsetY: row[2] }),
+  () => ({ ...base, offsetX: col[3], offsetY: 65 }),
 ];
 
 function organizePanels(positions = positions3x3plus1) {
@@ -544,7 +562,7 @@ function organizePanels(positions = positions3x3plus1) {
       const positionFn = positions[idx];
       if (!positionFn) return;
 
-      panel.resize({ width: 365, height: 318 }).reposition(positionFn(grid));
+      panel.resize({ width: gridStyle.width, height: gridStyle.height }).reposition(positionFn(grid));
     });
 
 }
