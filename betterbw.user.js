@@ -8,7 +8,7 @@
 // @grant       GM_setValue
 // @grant       GM_setValues
 // @grant       GM_listValues
-// @version     1.2.3
+// @version     1.3.0
 // @author      -
 // @description 21/10/2025, 20:41:33
 // @license GPL-3.0-or-later
@@ -562,6 +562,8 @@ function setupTools() {
   }
 
   chatHTML5.config['timeBeforeWatchingCamAgain'] = "1000";
+  chatHTML5.config['checkOwnStream'] = "1";
+  chatHTML5.config['showCountryFlag'] = "1";
   document.querySelector('#sortWebcamtBtn')?.click();
 
   const userMenu = document.querySelector('#userMenu');
@@ -583,7 +585,6 @@ function spyOn(obj, key, callback) {
   // Define the handler for intercepting the set operation on selectedUserid
   const handler = {
     set(target, prop, value) {
-      console.log('SET', prop, value);
       // If the `key` changed, trigger the callback
       if (prop === key && target[prop] !== value) {
         callback(value);
