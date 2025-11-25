@@ -38,6 +38,15 @@ GM_addStyle(`
   transition: opacity .2s ease-out;
 }
 
+.panel-action-btn:where(
+  [data-status-value="--"],
+  [data-status-value="-"],
+  [data-status-value="+"],
+  [data-status-value="++"]
+) {
+  margin-left: 0;
+}
+
 .jsPanel:not(:hover) .panel-action-btn {
   opacity: 0;
 }
@@ -50,10 +59,10 @@ GM_addStyle(`
     background: #111;
 }
 
-.jsPanel[data-status="--"] [data-status-value="--"] { background: rgba(230, 160, 140);}
-.jsPanel[data-status="-"] [data-status-value="-"] { background: rgba(238, 233, 200);}
-.jsPanel[data-status="+"] [data-status-value="+"] { background: rgba(120, 200, 230);}
-.jsPanel[data-status="++"] [data-status-value="++"] { background: rgba(100, 190, 250);}
+:where(#userMenu, .jsPanel)[data-status="--"] [data-status-value="--"] { background: rgba(205, 0, 0, 1); color: #fff;}
+:where(#userMenu, .jsPanel)[data-status="-"] [data-status-value="-"] { background: rgba(237, 146, 0, 1); color: #fff;}
+:where(#userMenu, .jsPanel)[data-status="+"] [data-status-value="+"] { background: rgba(0, 167, 228, 1); color: #fff;}
+:where(#userMenu, .jsPanel)[data-status="++"] [data-status-value="++"] { background: rgba(149, 50, 255, 1); color: #fff;}
 .jsPanel[data-status="undefined"] .jsPanel-title {
   text-decoration-color: orange;
   text-decoration-line: underline;
@@ -72,8 +81,31 @@ GM_addStyle(`
 .jsPanel[data-rotation="180"] video { rotate: 180deg; }
 .jsPanel[data-rotation="270"] video { rotate: 270deg; }
 
-#userList .userItem:has(i.lock.fa-lock) .userLabel {
-  color: rgba(255, 0, 0, .75);
+.slide_block {
+  width: 14px;
+}
+
+#userList .userItem {
+  border-bottom: none;
+}
+#userList .userLabel {
+  top: 0;
+}
+
+#userList .userItem:has(i.lock.fa-lock) .userAvatarContainer {
+  --bg-color: rgba(205, 0, 0, 0.75);
+  &:before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 5px;
+    height: calc(100% - 2px);
+    background: var(--bg-color);
+    right: -6px;
+    top: -4px;
+    border-top-left-radius: 60px;
+    border-bottom-left-radius: 60px;
+  }
 }
 
 .jsPanel {
@@ -102,6 +134,8 @@ video.mobile.mobile {
   margin-block: 1px;
 }
 `);
+
+const dataUsername = id => `[data-username="${id}"],[data-username^="${id}_"]`;
 
 /** @type {'' | 'new' | 'top'} */
 let algo = '';
@@ -356,32 +390,52 @@ function getCSS() {
     groups[value].push(id);
   }
 
-  const dataUsername = id => `[data-username="${id}"],[data-username^="${id}_"]`;
+  const userItems = group => `.userItem:where(${group.map(dataUsername).join(',')})`;
 
-  const css = `#userList .userItem:where(
-${groups['--'].map(dataUsername).join(',')}
-) {
-  opacity: 0.3 !important;
+  const css = `
+#tabs .userItem,
+#userList .userItem {
+  --text-decoration: line-through solid 1.8rem;
+  --decoration-opacity: 0.2;
 }
 
-#userList .userItem:where(
-${groups['-'].map(dataUsername).join(',')}
-) .userLabel {
-  color: rgba(0, 0, 0, 0.6);
+${userItems(groups['--'])} {
+  #userList & {
+    opacity: 0.3 !important;
+  }
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(205, 0, 0, 0.15);
+  }
 }
 
-#userList .userItem:where(
-${groups['+'].map(dataUsername).join(',')}
-) .userLabel {
-  color: rgba(0, 0, 0, 1);
-  font-weight: 700;
+${userItems(groups['-'])} {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(237, 146, 0, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(237, 146, 0, var(--decoration-opacity));
+  }
 }
 
-#userList .userItem:where(
-${groups['++'].map(dataUsername).join(',')}
-) .userLabel {
-  color: rgba(0, 0, 230, 1);
-  font-weight: 700;
+${userItems(groups['+'])} {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(0, 100, 255, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(0, 100, 255, var(--decoration-opacity));
+  }
+}
+
+${userItems(groups['++'])} {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(149, 50, 255, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(149, 50, 255, var(--decoration-opacity));
+  }
 }
 `;
 
@@ -511,10 +565,47 @@ function setupTools() {
   document.querySelector('#sortWebcamtBtn')?.click();
 
   const userMenu = document.querySelector('#userMenu');
-  if (userMenu) getMenuActions().forEach(action => userMenu.appendChild(action));
+  if (userMenu) {
+    getMenuActions().forEach(action => userMenu.appendChild(action));
+
+    chatHTML5.myUser = spyOn(chatHTML5.myUser, 'selectedUserid', (selectedUserid) => {
+      const el = document.querySelector(`#userList .userItem[data-id="${selectedUserid}"]`);
+      if (!el || !el.dataset.username) return;
+
+      const id = el.dataset.username.split('_')[0];
+      userMenu.dataset.username = id;
+      userMenu.dataset.status = GM_getValue(`${id}_status`);
+    });
+  }
+}
+
+function spyOn(obj, key, callback) {
+  // Define the handler for intercepting the set operation on selectedUserid
+  const handler = {
+    set(target, prop, value) {
+      console.log('SET', prop, value);
+      // If the `key` changed, trigger the callback
+      if (prop === key && target[prop] !== value) {
+        callback(value);
+      }
+
+      // Proceed with the default behavior of setting the property
+      target[prop] = value;
+      return true;
+    }
+  };
+
+  // Create a proxy to observe the changes
+  return new Proxy(obj, handler);
 }
 
 function getLatestUser() {
+  try {
+    return chatHTML5.myUser.id.split('_')[0];
+  } catch (e) {
+    console.error('Oooops...');
+  }
+
   const muteItem = document.querySelector('#userMenu [data-action="mute"]');
   const username = muteItem.textContent.split(' ').at(-1).split('_').at(0);
   return username;
