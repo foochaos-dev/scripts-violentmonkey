@@ -114,7 +114,7 @@ const PANEL_SELECTOR = '.jsPanel.jsPanel-theme-default';
 const PANEL_ACTIONS = [
   {
     icon: '--',
-    label: 'Off',
+    label: 'Nope\nDo not suggest this person.',
     handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '--');
       dynamicStyle.innerHTML = getCSS();
@@ -126,7 +126,7 @@ const PANEL_ACTIONS = [
   },
   {
     icon: '-',
-    label: 'Fade',
+    label: 'So so\nIt depends on the day, on the mood...',
     handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '-');
       dynamicStyle.innerHTML = getCSS();
@@ -137,7 +137,7 @@ const PANEL_ACTIONS = [
   },
   {
     icon: '+',
-    label: 'Good',
+    label: 'Yeah\nI liked you, buddy',
     handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '+');
       dynamicStyle.innerHTML = getCSS();
@@ -148,7 +148,7 @@ const PANEL_ACTIONS = [
   },
   {
     icon: '++',
-    label: 'Great',
+    label: 'Ohhh Yeah!\nI liked you a lot, buddy!',
     handler: ({id, panel}) => {
       GM_setValue(`${id}_status`, '++');
       dynamicStyle.innerHTML = getCSS();
@@ -172,7 +172,7 @@ const PANEL_ACTIONS = [
   },
   {
     icon: '⏱',
-    label: 'Cooldown 15m',
+    label: 'Cooldown 15m\nDo not suggest this person for the next 15 minutes',
     handler: cooldownIt
   },
 ].reverse();
