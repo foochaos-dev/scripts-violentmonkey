@@ -1,0 +1,19 @@
+{
+  "name": "scripts-violentmonkey",
+  "version": "1.0.0",
+  "description": "",
+  "license": "GPL-3.0-or-later",
+  "author": "Thicker Bro <justnet@hotmail.com.br>",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc ./src",
+    "ts-node-run": "node --loader ts-node/esm",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

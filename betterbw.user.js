@@ -92,19 +92,38 @@ GM_addStyle(`
   top: 0;
 }
 
+.webcamBtn i.lock {
+  &.fa-unlock { display: none; }
+
+  position: absolute;
+  left: -11px;
+  top: -1px;
+}
+
+.webcamBtn {
+  padding-inline: 1rem;
+}
+
 #userList .userItem:has(i.lock.fa-lock) .userAvatarContainer {
   --bg-color: rgba(205, 0, 0, 0.75);
+  --v-padding: 1px;
+
   &:before {
     content: '';
     display: block;
     position: absolute;
-    width: 5px;
-    height: calc(100% - 2px);
-    background: var(--bg-color);
-    right: -6px;
-    top: -4px;
-    border-top-left-radius: 60px;
-    border-bottom-left-radius: 60px;
+    width: 120px;
+    height: calc(100% - 2 * var(--v-padding));
+    background: linear-gradient(90deg,
+    rgba(255, 0, 0, 0.75) 0%,
+    rgba(255, 0, 0, 0.33) 4%,
+    rgba(255, 0, 0, 0.75) 7%,
+    rgba(255, 0, 0, 0.25) 7%,
+    rgba(255, 0, 0, 0.10) 50%,
+    rgba(255, 0, 0, 0) 100%);
+    left: 100%;
+    top: calc(-5px + var(--v-padding));
+    border-radius: 6px;
   }
 }
 
