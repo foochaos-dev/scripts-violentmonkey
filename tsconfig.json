@@ -3,23 +3,28 @@
   "compilerOptions": {
     // File Layout
     // "rootDir": "./src",
-    // "outDir": "./dist",
+    "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "preserve",
     "moduleResolution": "bundler",
     "target": "esnext",
-    "types": [],
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "lib": ["dom", "DOM.Iterable", "es2022"],
+    "types": [
+      "rsbuild",
+      "tampermonkey"
+    ],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
     // and npm install -D @types/node
 
     // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -28,6 +33,7 @@
     // Style Options
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
+    "noImplicitAny": false,
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
     // "noFallthroughCasesInSwitch": true,

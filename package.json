@@ -7,12 +7,20 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "tsc ./src",
+    "build:tsc": "tsc ./src",
+    "prebuild:rsbuild": "tsc --noEmit",
+    "build:rsbuild": "rsbuild build",
     "ts-node-run": "node --loader ts-node/esm",
+    "dev": "rsbuild dev",
+    "build": "npm run build:rsbuild",
+    "preview": "rsbuild preview",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "tsc --watch"
+    "watch": "rsbuild build --watch"
   },
   "devDependencies": {
+    "@rsbuild/core": "^1.6.9",
+    "@types/tampermonkey": "^5.0.5",
+    "jspanel4": "^4.16.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
