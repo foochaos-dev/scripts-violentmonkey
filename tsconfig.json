@@ -12,10 +12,7 @@
     "target": "esnext",
     "typeRoots": ["./src/types", "./node_modules/@types"],
     "lib": ["dom", "DOM.Iterable", "es2022"],
-    "types": [
-      "rsbuild",
-      "tampermonkey"
-    ],
+    "types": ["jquery", "rsbuild", "tampermonkey"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -42,6 +39,7 @@
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "nano-jsx/lib",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,

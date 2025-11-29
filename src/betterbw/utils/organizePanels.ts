@@ -56,6 +56,17 @@ export function organizePanels(positions = positions3x3plus1) {
     }
   }
 
+  // Put the 10th user in a better position, if possible
+  if (grid[9]) {
+    const nextAvailableSlot = grid.indexOf(null);
+    if (nextAvailableSlot > -1) {
+      grid[9].dataset.gridIndex = nextAvailableSlot.toString();
+      grid[nextAvailableSlot] = grid[9];
+      grid[9] = null;
+    }
+  }
+
+  // Position the new panels
   for (const panel of groups.newlyCreated) {
     const nextAvailableSlot = grid.indexOf(null);
     if (nextAvailableSlot > -1) {

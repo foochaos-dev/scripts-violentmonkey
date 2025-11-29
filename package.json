@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@rsbuild/core": "^1.6.9",
+    "@types/jquery": "^3.5.33",
     "@types/tampermonkey": "^5.0.5",
     "jspanel4": "^4.16.1",
     "prettier": "3.7.2",

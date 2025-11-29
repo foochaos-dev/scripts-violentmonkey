@@ -1,10 +1,11 @@
-import { openCandidates, getCandidates } from './utils/openPanel';
+import { openCandidates, getCandidates, queryPanels } from './utils/openPanel';
 import { setAlgo } from './algo';
 import { getMenuActions } from './features/panelActions';
 import { organizePanels } from './utils/organizePanels';
 import { topRandom } from './utils/sortFunctions';
 import { spyOn } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
+import { setNextCam } from './features/observeOpenPanels';
 
 function setupHeader() {
   const header = document.querySelector<HTMLElement>('#header .header-custom-btns');
@@ -67,9 +68,28 @@ function setupUserMenu() {
   });
 }
 
+function setupSidebar() {
+  $(document.getElementById('userList')!).on('click', '.webcamBtn', function (event) {
+    const opened = queryPanels();
+    if (opened.length < 10) return;
+
+    const nextUser = $(this).closest<HTMLDivElement>('.userItem')[0];
+    if (nextUser) {
+      // event.preventDefault();
+      event.stopPropagation();
+      // event.stopImmediatePropagation();
+      setNextCam(nextUser);
+
+      const panel = document.querySelector('[data-grid-index="9"]');
+      if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
+    }
+  });
+}
+
 export function setupTools() {
   setupHeader();
   setupUserMenu();
+  setupSidebar();
 
   chatHTML5.config['timeBeforeWatchingCamAgain'] = '1000';
   chatHTML5.config['checkOwnStream'] = '1';
