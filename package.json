@@ -21,6 +21,7 @@
     "@rsbuild/core": "^1.6.9",
     "@types/tampermonkey": "^5.0.5",
     "jspanel4": "^4.16.1",
+    "prettier": "3.7.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

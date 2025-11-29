@@ -1,11 +1,11 @@
-import { PANEL_SELECTOR } from './openPanel';
+import { queryPanels } from './openPanel';
 
 const base = { my: 'right-top', at: 'right-top' };
 const gridStyle = {
-  marginTop: 50,
+  marginTop: 30,
   marginRight: 5,
-  gapX: 5,
-  gapY: 5,
+  gapX: 4,
+  gapY: 4,
   width: 365,
   height: 318,
 };
@@ -33,8 +33,8 @@ const positions3x3plus1: Function[] = [
   () => ({ ...base, offsetX: col[3], offsetY: 65 }),
 ];
 export function organizePanels(positions = positions3x3plus1) {
-  const opened = Array.from(document.querySelectorAll<HTMLDivElement>(PANEL_SELECTOR));
-  if (!opened?.length) return;
+  const opened = queryPanels();
+  if (!opened.length) return;
 
   const GRID_SIZE = 10;
   const grid = Array(GRID_SIZE).fill(null);
@@ -65,7 +65,7 @@ export function organizePanels(positions = positions3x3plus1) {
   }
 
   grid
-    .map(panel => panel ? jsPanel.activePanels.getPanel(panel.id) : null)
+    .map((panel) => (panel ? jsPanel.activePanels.getPanel(panel.id) : null))
     .forEach((panel, idx, grid) => {
       if (!panel) return;
 
@@ -74,5 +74,4 @@ export function organizePanels(positions = positions3x3plus1) {
 
       panel.resize({ width: gridStyle.width, height: gridStyle.height }).reposition(positionFn(grid));
     });
-
 }

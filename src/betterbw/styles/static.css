@@ -1,0 +1,255 @@
+body>div:nth-child(1) {
+  height: calc(100% - 4px);
+}
+
+body:not([data-algo]) button[data-sort-order=""],
+body[data-algo=""] button[data-sort-order=""],
+body[data-algo="new"] button[data-sort-order="new"],
+body[data-algo="top"] button[data-sort-order="top"] {
+  color: white;
+  background-color: #50c180;
+}
+
+.panel-action {
+  position: absolute;
+  left: 3px;
+}
+
+.panel-action-btn {
+  cursor: pointer;
+  margin-left: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  color: inherit;
+  font-size: 14px;
+
+  float: right;
+  position: relative;
+  border: 1px solid #DDD;
+  top: 2px;
+  height: 15px;
+  line-height: 0;
+  opacity: 1;
+  transition: opacity .2s ease-out;
+}
+
+.panel-action-btn:where([data-status-value="--"],
+  [data-status-value="-"],
+  [data-status-value="+"],
+  [data-status-value="++"]) {
+  margin-left: 0;
+}
+
+.jsPanel:not(:hover) .panel-action-btn {
+  opacity: 0;
+}
+
+.jsPanel .speaks {
+  width: 2px;
+}
+
+.jsPanel .jsPanel-content {
+  background: #111;
+}
+
+:where(#userMenu, .jsPanel)[data-status="--"] [data-status-value="--"] {
+  background: rgba(205, 0, 0, 1);
+  color: #fff;
+}
+
+:where(#userMenu, .jsPanel)[data-status="-"] [data-status-value="-"] {
+  background: rgba(237, 146, 0, 1);
+  color: #fff;
+}
+
+:where(#userMenu, .jsPanel)[data-status="+"] [data-status-value="+"] {
+  background: rgba(0, 167, 228, 1);
+  color: #fff;
+}
+
+:where(#userMenu, .jsPanel)[data-status="++"] [data-status-value="++"] {
+  background: rgba(149, 50, 255, 1);
+  color: #fff;
+}
+
+:where(#userMenu, .jsPanel)[data-is-cooldown="true"] [data-status-value="⏱"] {
+  background: rgba(50, 50, 50, 1);
+  color: #fff;
+}
+
+#userMenu[data-private-cam="true"] [data-action="viewWebcam"] {
+  color: red;
+
+  .fa:after {
+    content: " \f023";
+    /* font-family: "Font Awesome 5 Free"; */
+    color: red;
+    font-weight: 900;
+  }
+}
+
+.jsPanel[data-status="undefined"] .jsPanel-title {
+  text-decoration-color: orange;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 2px;
+}
+
+.jsPanel[data-status="undefined"] button:where([data-status-value="++"]) {
+  display: none;
+}
+
+.jsPanel[data-status="--"] button:where([data-status-value="++"]) {
+  display: none;
+}
+
+.jsPanel[data-status="-"] button:where([data-status-value="++"]) {
+  display: none;
+}
+
+.jsPanel[data-status="+"] button:where([data-status-value="--"]) {
+  display: none;
+}
+
+.jsPanel[data-status="++"] button:where([data-status-value="--"]) {
+  display: none;
+}
+
+.jsPanel:where([data-rotation=""], [data-rotation="0"]) video {
+  rotate: 0deg;
+}
+
+.jsPanel[data-rotation="90"] video {
+  rotate: 90deg;
+}
+
+.jsPanel[data-rotation="180"] video {
+  rotate: 180deg;
+}
+
+.jsPanel[data-rotation="270"] video {
+  rotate: 270deg;
+}
+
+.slide_block {
+  width: 14px;
+}
+
+#usersContainer {
+  --container-width: 240px;
+  width: var(--container-width);
+
+  &.leftLayout #slide_block {
+    top: 50px;
+    left: 31px;
+    z-index: 101;
+    height: 37px;
+  }
+}
+
+#myWebcamContainer .btn {
+  text-wrap: inherit;
+  line-height: 1 !important;
+}
+
+#userList .userItem {
+  border-bottom: none;
+  margin-left: 1px;
+}
+
+#userList .userLabel {
+  top: 0;
+  margin-left: 2px;
+  padding-left: 8px;
+
+  border-top-left-radius: 9px;
+  border-bottom-left-radius: 9px;
+
+  .userSince {
+    left: unset;
+  }
+}
+
+.webcamBtn {
+  padding-inline: 1rem;
+  margin: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.webcamBtn i.lock {
+  &.fa-unlock {
+    display: none;
+  }
+
+  &.fa-lock {
+    text-shadow: 2px 2px 0 white;
+  }
+
+  position: absolute;
+  left: -11px;
+  top: 5px;
+  font-size: 16px;
+}
+
+.webcamBtn i.fa-volume-down {
+  padding-inline: 4px;
+}
+
+.eye-icon .fa-eye.isWatching {
+  /* color: #333 !important; */
+  color: gold !important;
+  position: absolute;
+  right: 42px;
+  bottom: 5px;
+  text-shadow: -1px -1px 1px goldenrod;
+}
+
+#userList .userItem:has(.webcamBtn.visible i.lock.fa-lock) {
+  --lock-color: rgba(205, 0, 0, 0.33);
+  --v-padding: 0px;
+
+  .userLabel {
+    box-shadow: inset 3px 0 1px 2px var(--lock-color);
+  }
+
+  .webcamBtn.visible {
+    box-shadow: inset -3px 0 1px 2px var(--lock-color);
+    border: none;
+  }
+}
+
+.jsPanel {
+  box-shadow: none;
+  border-color: #888 !important;
+}
+
+#roomsBtn {
+  line-height: 1 !important;
+}
+
+#header {
+  height: 30px !important;
+}
+
+#tabsAndFooter,
+#footer {
+  /* width: min(50%, 800px); */
+  width: min(50%, 642px);
+}
+
+video.mobile.mobile {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.jsPanel-headerbar {
+  min-height: 18px;
+}
+
+.jsPanel-titlebar {
+  min-height: 16px;
+}
+
+.jsPanel-titlebar h3 {
+  margin-block: 1px;
+}

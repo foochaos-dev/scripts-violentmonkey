@@ -1,20 +1,19 @@
 import { topRandom } from './utils/sortFunctions';
-import rawCss from './style.css?raw';
-import { attachPanelActions } from './panelActions';
-import { getCandidates, openCandidates, PANEL_SELECTOR } from './utils/openPanel';
+import rawCss from './styles/static.css?raw';
+import { getCandidates, openCandidates } from './utils/openPanel';
 import { waitToBe } from './utils/waitToBe';
 import { setupTools } from './setupTools';
-import './observers';
+import { observePanels } from './features/observeOpenPanels';
 
 GM_addStyle(rawCss);
 
-// Initialize existing panels
-document.querySelectorAll<HTMLDivElement>(PANEL_SELECTOR).forEach(attachPanelActions);
+observePanels();
 
-Promise.resolve()
-  .then(() => waitToBe('#roomsModal', ['aria-hidden'], el => el.getAttribute('aria-hidden') === 'false'))
-  .then(() => waitToBe('#roomsModal', ['aria-hidden'], el => el.getAttribute('aria-hidden') !== 'false'))
-  .then(() => {
-    setupTools();
-    openCandidates(getCandidates(topRandom));
-  });
+const whenRoomsModalClosed = Promise.resolve()
+  .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false'))
+  .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') !== 'false'));
+
+whenRoomsModalClosed.then(() => {
+  setupTools();
+  openCandidates(getCandidates(topRandom));
+});

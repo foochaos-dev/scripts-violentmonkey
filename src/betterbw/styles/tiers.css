@@ -1,0 +1,45 @@
+#tabs .userItem,
+#userList .userItem {
+  --text-decoration: line-through solid 1.8rem;
+  --decoration-opacity: 0.2;
+}
+
+.group_minus_minus {
+  #userList & {
+    opacity: 0.3 !important;
+  }
+
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(205, 0, 0, 0.15);
+  }
+}
+
+.group_minus {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(237, 146, 0, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(237, 146, 0, var(--decoration-opacity));
+  }
+}
+
+.group_plus {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(0, 100, 255, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(0, 100, 255, var(--decoration-opacity));
+  }
+}
+
+.group_plus_plus {
+  #tabs &:first-child {
+    text-decoration: var(--text-decoration) rgba(149, 50, 255, var(--decoration-opacity));
+  }
+
+  #userList & .userLabel {
+    background: rgba(149, 50, 255, var(--decoration-opacity));
+  }
+}

@@ -4,13 +4,16 @@ import { getMenuActions } from './panelActions';
 import { organizePanels } from './utils/organizePanels';
 import { topRandom } from './utils/sortFunctions';
 import { spyOn } from './utils/spyOn';
+import { isOnCooldown } from './features/cooldown';
 
 function setupHeader() {
   const header = document.querySelector('#header .header-custom-btns');
   if (!header) return;
+
   {
     const button = document.createElement('button');
     button.textContent = 'ø';
+    button.dataset.sortOrder = '';
     button.title = 'Organize open panels and stop the algorithm';
     button.addEventListener('click', () => {
       organizePanels();
@@ -48,15 +51,19 @@ function setupUserMenu() {
   const userMenu = document.querySelector<HTMLDivElement>('#userMenu');
   if (!userMenu) return;
 
-  getMenuActions().forEach(action => userMenu.appendChild(action));
+  getMenuActions().forEach((action) => userMenu.appendChild(action));
 
   chatHTML5.myUser = spyOn(chatHTML5.myUser, 'selectedUserid', (selectedUserid) => {
-    const el = document.querySelector<HTMLDivElement>(`#userList .userItem[data-id="${selectedUserid}"]`);
+    const el = document.querySelector<HTMLDivElement>(`:where(#userList,#tabs) .userItem[data-id="${selectedUserid}"]`);
     if (!el || !el.dataset.username) return;
 
-    const id = el.dataset.username.split('_')[0];
+    const id = el.dataset.username.split('_')[0]!;
     userMenu.dataset.username = id;
     userMenu.dataset.status = GM_getValue(`${id}_status`);
+    userMenu.dataset.isCooldown = Boolean(isOnCooldown(id)).toString();
+    userMenu.dataset.privateCam = Boolean(
+      document.querySelector(`#userList .userItem[data-id="${selectedUserid}"]:has(.webcamBtn.visible i.lock.fa-lock)`)
+    ).toString();
   });
 }
 
@@ -64,8 +71,8 @@ export function setupTools() {
   setupHeader();
   setupUserMenu();
 
-  chatHTML5.config['timeBeforeWatchingCamAgain'] = "1000";
-  chatHTML5.config['checkOwnStream'] = "1";
-  chatHTML5.config['showCountryFlag'] = "1";
+  chatHTML5.config['timeBeforeWatchingCamAgain'] = '1000';
+  chatHTML5.config['checkOwnStream'] = '1';
+  chatHTML5.config['showCountryFlag'] = '1';
   document.querySelector<HTMLButtonElement>('#sortWebcamtBtn')?.click();
 }

@@ -1,6 +1,7 @@
-
-export type Algo ='' | 'new' | 'top';
+export type Algo = '' | 'new' | 'top';
 
 let algo: Algo = '';
 export const getAlgo = () => algo;
-export const setAlgo = (val: Algo) => algo = val;
+export const setAlgo = (val: Algo) => {
+  document.body.dataset.algo = algo = val;
+};

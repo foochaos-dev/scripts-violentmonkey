@@ -1,0 +1,48 @@
+.userItem:where([data-username="I_am_watching"]) {
+
+  /* Turn webcam button green, on the sidebar */
+  #userList & .webcamBtn {
+    background: rgba(80, 206, 133, 1) !important;
+  }
+
+  /* Put a "panel" icon close the user's name */
+  #tabs &:before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 12px;
+    height: 11px;
+    top: 50%;
+    transform: translateY(-50%) translateX(-120%);
+    border-radius: 2px;
+    border: rgba(178, 178, 178, 1) solid 1px;
+    border-top-width: 3px;
+  }
+}
+
+.watchingMe,
+.user_watching_me {
+  --gridGap: 4px;
+  box-shadow: #FFD700 0px 0px 1px var(--gridGap) !important;
+  transition: box-shadow .2s ease-out;
+
+  & .jsPanel-headerbar {
+    background: gold;
+    background: linear-gradient(gold 0%, transparent 30%, transparent 70%, gold 85%);
+  }
+
+  & .jsPanel-title::before {
+    content: "👁️";
+    content: "\f06e";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 400;
+
+    color: gold;
+    position: absolute;
+    z-index: 1;
+    left: -2px;
+    top: -5px;
+    text-shadow: 1px 1px 0 goldenrod;
+    font-size: 14px;
+  }
+}

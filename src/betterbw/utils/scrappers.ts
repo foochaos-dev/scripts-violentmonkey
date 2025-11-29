@@ -1,12 +1,10 @@
+export function getUsername(panel: HTMLDivElement) {
+  const title = panel.querySelector<HTMLHeadingElement>('.jsPanel-title')!;
+  const username = Array.from(title.childNodes)
+    .find((e) => e.nodeType === Node.TEXT_NODE && e.nodeValue?.trim())
+    ?.nodeValue?.trim();
+  const name = username?.split('_')[0];
 
-// Utility
-export function getRotation(element: HTMLElement) {
-  if (!element || !element.dataset.rotation) return 0;
-  return parseInt(element.dataset.rotation, 10) || 0;
-}
-
-export function getUsername(panel) {
-  const title = panel.querySelector('.jsPanel-title');
-  const username = title.childNodes.values().find(e => e.nodeType === 3 && e.nodeValue.trim()).nodeValue.trim();
-  return username.split('_')[0];
+  if (!name) console.error(`Couldn't find username on ${title.textContent}`);
+  return name || 'FAIL';
 }
