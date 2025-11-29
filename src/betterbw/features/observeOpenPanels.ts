@@ -1,7 +1,7 @@
 import { updateCssForOpenedPanels } from '../dynamicOpenedStyle';
 import { PANEL_SELECTOR } from '../utils/openPanel';
 import { getAlgo } from '../algo';
-import { attachPanelActions, cleanupPanel } from '../panelActions';
+import { attachPanelActions, cleanupPanel } from './panelActions';
 
 export function iterate(nodes: NodeList, selector: string, fn: (e: HTMLDivElement, key: number) => void) {
   let found = false;

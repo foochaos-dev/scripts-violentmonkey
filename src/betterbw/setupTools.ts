@@ -1,13 +1,13 @@
 import { openCandidates, getCandidates } from './utils/openPanel';
 import { setAlgo } from './algo';
-import { getMenuActions } from './panelActions';
+import { getMenuActions } from './features/panelActions';
 import { organizePanels } from './utils/organizePanels';
 import { topRandom } from './utils/sortFunctions';
 import { spyOn } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
 
 function setupHeader() {
-  const header = document.querySelector('#header .header-custom-btns');
+  const header = document.querySelector<HTMLElement>('#header .header-custom-btns');
   if (!header) return;
 
   {

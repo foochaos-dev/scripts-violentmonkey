@@ -11,7 +11,7 @@ export default defineConfig({
   source: {
     entry: {
       betterbw: './src/betterbw/index.ts',
-    }
+    },
   },
   performance: {
     removeConsole: ['log'],
@@ -22,15 +22,13 @@ export default defineConfig({
     module: true,
     legalComments: 'inline',
     filename: {
-      js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js'
+      js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js',
     },
   },
-
 
   dev: {
     writeToDisk: true, // https://rsbuild.rs/guide/basic/output-files#development-mode-output
     liveReload: false,
     hmr: false,
   },
-
 });

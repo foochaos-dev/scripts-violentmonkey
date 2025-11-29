@@ -44,7 +44,16 @@ body[data-algo="top"] button[data-sort-order="top"] {
 }
 
 .jsPanel .speaks {
-  width: 2px;
+  width: 3px;
+  rotate: 180deg;
+  top: 0;
+  bottom: 0;
+  left: 0;
+
+  .volume {
+    background: yellow;
+    box-shadow: 1px 1px 1px rgb(0, 0, 0), 2px 2px 1px rgb(255, 255, 255);
+  }
 }
 
 .jsPanel .jsPanel-content {

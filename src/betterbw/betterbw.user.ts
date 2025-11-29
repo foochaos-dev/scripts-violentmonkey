@@ -15,5 +15,6 @@ const whenRoomsModalClosed = Promise.resolve()
 
 whenRoomsModalClosed.then(() => {
   setupTools();
+  observePanels();
   openCandidates(getCandidates(topRandom));
 });

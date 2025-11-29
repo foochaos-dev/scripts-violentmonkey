@@ -1,7 +1,7 @@
-import { refreshDynamicStyle } from './dynamicStyle';
-import { rotateCam } from './features/rotateCam';
-import { cooldownIt } from './features/cooldown';
-import { getUsername } from './utils/scrappers';
+import { refreshDynamicStyle } from '../dynamicStyle';
+import { rotateCam } from './rotateCam';
+import { cooldownIt } from './cooldown';
+import { getUsername } from '../utils/scrappers';
 
 // Action definitions: label and handler per action
 export const PANEL_ACTIONS = [
