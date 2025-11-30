@@ -6,6 +6,11 @@ export default defineConfig({
   mode: 'production', // concatenate modules even on `rsbuild watch`
   tools: {
     htmlPlugin: false,
+    rspack: {
+      externals: {
+        jspanel4: 'jsPanel',
+      },
+    },
   },
   plugins: [],
   source: {
@@ -19,7 +24,7 @@ export default defineConfig({
   output: {
     target: 'web',
     minify: false,
-    module: true,
+    module: false,
     legalComments: 'inline',
     filename: {
       js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js',

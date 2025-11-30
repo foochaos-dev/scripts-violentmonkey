@@ -3,23 +3,20 @@ export type JSPanel = {
   close: () => JSPanel;
   resize: (options: any) => JSPanel;
   reposition: (options: any) => JSPanel;
-}
+};
 
 export type JSPanelType = {
   activePanels: {
     getPanel: (id: string) => JSPanel | undefined;
-  }
+  };
 };
 
 export type ChatHTML5Type = {
   myUser: {
     id: string;
-  },
-  config: {
-
-  },
+  };
+  config: {};
 };
-
 
 declare global {
   interface Window {
@@ -30,5 +27,5 @@ declare global {
   const jsPanel: Window['jsPanel'];
   const chatHTML5: Window['chatHTML5'];
 
-  const GM_getValues: <TValue>(name: string[]) => TValue[]
+  const GM_getValues: <TValue>(name: string[]) => TValue[];
 }

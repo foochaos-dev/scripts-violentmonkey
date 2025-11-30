@@ -7,8 +7,6 @@ import { observePanels } from './features/observeOpenPanels';
 
 GM_addStyle(rawCss);
 
-observePanels();
-
 const whenRoomsModalClosed = Promise.resolve()
   .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false'))
   .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') !== 'false'));

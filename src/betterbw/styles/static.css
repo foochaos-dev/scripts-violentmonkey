@@ -39,6 +39,15 @@ body[data-algo="top"] button[data-sort-order="top"] {
   margin-left: 0;
 }
 
+.jsPanel[data-grid-index]:not([data-grid-index="9"]) {
+  transition:
+    top .15s linear,
+    right .15s linear,
+    bottom .15s linear,
+    left .15s linear,
+    box-shadow .2s ease-out;
+}
+
 .jsPanel:not(:hover) .panel-action-btn {
   opacity: 0;
 }
@@ -191,7 +200,9 @@ body[data-algo="top"] button[data-sort-order="top"] {
   }
 
   &.fa-lock {
-    text-shadow: 2px 2px 0 white;
+    text-shadow: -2px 2px 0 white;
+    right: -25px;
+    top: 1px;
   }
 
   position: absolute;

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @namespace   Circlejerk Scripts
 // @name        Better bateworld.com
-// @version     1.3.2
+// @version     1.3.3
 // @author      Thick Bro
 // @match       https://bateworld.com//html5-chat/chat2/*
 // @grant       GM_addStyle

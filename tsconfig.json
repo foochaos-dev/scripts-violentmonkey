@@ -9,7 +9,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "preserve",
     "moduleResolution": "bundler",
-    "target": "esnext",
+    "target": "ES2015",
     "typeRoots": ["./src/types", "./node_modules/@types"],
     "lib": ["dom", "DOM.Iterable", "es2022"],
     "types": ["jquery", "rsbuild", "tampermonkey"],
