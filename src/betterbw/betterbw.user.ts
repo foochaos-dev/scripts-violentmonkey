@@ -1,5 +1,5 @@
 import { topRandom } from './utils/sortFunctions';
-import rawCss from './styles/static.css?raw';
+import rawCss from './styles/static.css?inline';
 import { getCandidates, openCandidates } from './utils/openPanel';
 import { waitToBe } from './utils/waitToBe';
 import { setupTools } from './setupTools';

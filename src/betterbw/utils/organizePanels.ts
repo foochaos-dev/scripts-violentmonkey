@@ -1,25 +1,29 @@
 import { queryPanels } from './openPanel';
 
 const base = { my: 'right-top', at: 'right-top' };
-const gridStyle = {
-  marginTop: 30,
-  marginRight: 5,
-  gapX: 4,
-  gapY: 4,
-  width: 365,
-  height: 318,
-};
+
+const MARGIN_TOP = 30;
+const MARGIN_RIGHT = 5;
+const GAP_X = 4;
+const GAP_Y = 4;
+const WIDTH = 365;
+const HEIGHT = 318;
+
+// prettier-ignore
 const col = [
-  -gridStyle.marginRight,
-  -(gridStyle.marginRight + gridStyle.width + gridStyle.gapX),
-  -(gridStyle.marginRight + (gridStyle.width + gridStyle.gapX) * 2),
-  -(gridStyle.marginRight + (gridStyle.width + gridStyle.gapX) * 3),
+  -MARGIN_RIGHT,
+  -(MARGIN_RIGHT + WIDTH + GAP_X),
+  -(MARGIN_RIGHT + (WIDTH + GAP_X) * 2),
+  -(MARGIN_RIGHT + (WIDTH + GAP_X) * 3)
 ];
+
+// prettier-ignore
 const row = [
-  gridStyle.marginTop,
-  gridStyle.marginTop + gridStyle.height + gridStyle.gapY,
-  gridStyle.marginTop + (gridStyle.height + gridStyle.gapY) * 2,
+  MARGIN_TOP,
+  MARGIN_TOP + HEIGHT + GAP_Y,
+  MARGIN_TOP + (HEIGHT + GAP_Y) * 2
 ];
+
 const positions3x3plus1: Function[] = [
   () => ({ ...base, offsetX: col[0], offsetY: row[0] }),
   () => ({ ...base, offsetX: col[0], offsetY: row[1] }),
@@ -83,6 +87,6 @@ export function organizePanels(positions = positions3x3plus1) {
       const positionFn = positions[idx];
       if (!positionFn) return;
 
-      panel.resize({ width: gridStyle.width, height: gridStyle.height }).reposition(positionFn(grid));
+      panel.resize({ width: WIDTH, height: HEIGHT }).reposition(positionFn(grid));
     });
 }

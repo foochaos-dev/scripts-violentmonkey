@@ -39,7 +39,7 @@ body[data-algo="top"] button[data-sort-order="top"] {
   margin-left: 0;
 }
 
-.jsPanel[data-grid-index]:not([data-grid-index="9"]) {
+.jsPanel[data-grid-index]:not([data-grid-index="9"]):not(.ui-draggable-dragging) {
   transition:
     top .15s linear,
     right .15s linear,
