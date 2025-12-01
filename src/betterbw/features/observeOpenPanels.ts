@@ -3,6 +3,7 @@ import { PANEL_SELECTOR } from '../utils/openPanel';
 import { getAlgo } from '../algo';
 import { attachPanelActions, cleanupPanel } from './panelActions';
 import { organizePanels } from '../utils/organizePanels';
+import { tabFocused, whenTabFocused } from './tabFocus';
 
 export function iterate(nodes: NodeList, selector: string, fn: (e: HTMLDivElement, key: number) => void) {
   let found = false;
@@ -22,6 +23,12 @@ export function iterate(nodes: NodeList, selector: string, fn: (e: HTMLDivElemen
 let nextUser: HTMLDivElement | null = null;
 export const setNextCam = (val: HTMLDivElement) => (nextUser = val);
 
+let clickRequested = false;
+const clickOnAlgoButton = (): void => {
+  const algo = getAlgo();
+  if (algo) setTimeout(() => document.querySelector<HTMLButtonElement>(`button[data-sort-order="${algo}"]`)?.click(), 32, algo);
+};
+
 export function observePanels(selector = PANEL_SELECTOR) {
   // Observe DOM for dynamic panels
   const observerPanels = new MutationObserver((mutations) => {
@@ -39,13 +46,14 @@ export function observePanels(selector = PANEL_SELECTOR) {
       if (nextUser) {
         nextUser.querySelector<HTMLDivElement>('.webcamBtn.visible')?.click();
         nextUser = null;
-      } else {
-        const algo = getAlgo();
-        if (algo) {
-          setTimeout(() => {
-            document.querySelector<HTMLButtonElement>(`button[data-sort-order="${algo}"]`)?.click();
-          }, 32);
-        }
+      } else if (tabFocused()) {
+        clickOnAlgoButton();
+      } else if (!clickRequested) {
+        clickRequested = true;
+        whenTabFocused(() => {
+          clickRequested = false;
+          clickOnAlgoButton();
+        });
       }
     }
 
