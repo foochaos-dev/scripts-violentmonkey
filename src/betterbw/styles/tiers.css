@@ -1,45 +1,37 @@
-#tabs .userItem,
+/* #tabs .userItem,
 #userList .userItem {
   --text-decoration: line-through solid 1.8rem;
   --decoration-opacity: 0.2;
+} */
+
+#userList .userItem:where(.group_minus_minus) {
+  opacity: 0.3 !important;
 }
 
-.group_minus_minus {
-  #userList & {
-    opacity: 0.3 !important;
-  }
-
-  #tabs &:first-child {
-    text-decoration: var(--text-decoration) rgba(205, 0, 0, 0.15);
-  }
+#tabs .userLabelBBW:where(.group_minus_minus) {
+  text-decoration: line-through solid 1.8rem rgba(205, 0, 0, 0.15);
 }
 
-.group_minus {
-  #tabs &:first-child {
-    text-decoration: var(--text-decoration) rgba(237, 146, 0, var(--decoration-opacity));
-  }
-
-  #userList & .userLabel {
-    background: rgba(237, 146, 0, var(--decoration-opacity));
-  }
+#tabs .userLabelBBW:where(.group_minus) {
+  text-decoration: line-through solid 1.8rem rgba(237, 146, 0, 0.2);
 }
 
-.group_plus {
-  #tabs &:first-child {
-    text-decoration: var(--text-decoration) rgba(0, 100, 255, var(--decoration-opacity));
-  }
-
-  #userList & .userLabel {
-    background: rgba(0, 100, 255, var(--decoration-opacity));
-  }
+#userList .userItem:where(.group_minus) .userLabel {
+  background: rgba(237, 146, 0, 0.2);
 }
 
-.group_plus_plus {
-  #tabs &:first-child {
-    text-decoration: var(--text-decoration) rgba(149, 50, 255, var(--decoration-opacity));
-  }
+#tabs .userLabelBBW:where(.group_plus) {
+  text-decoration: line-through solid 1.8rem rgba(0, 100, 255, 0.2);
+}
 
-  #userList & .userLabel {
-    background: rgba(149, 50, 255, var(--decoration-opacity));
-  }
+#userList .userItem:where(.group_plus) .userLabel {
+  background: rgba(0, 100, 255, 0.2);
+}
+
+#tabs .userLabelBBW:where(.group_plus_plus) {
+  text-decoration: line-through solid 1.8rem rgba(149, 50, 255, 0.2);
+}
+
+#userList .userItem:where(.group_plus_plus) .userLabel {
+  background: rgba(149, 50, 255, 0.2);
 }

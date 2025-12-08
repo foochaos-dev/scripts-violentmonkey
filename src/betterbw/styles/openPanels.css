@@ -1,19 +1,20 @@
-.userItem:where([data-username="I_am_watching"]) {
+[data-username="I_am_watching"] {
 
   /* Turn webcam button green, on the sidebar */
-  #userList & .webcamBtn {
+  #userList &.userItem .webcamBtn {
     background: rgba(80, 206, 133, 1) !important;
   }
 
   /* Put a "panel" icon close the user's name */
-  #tabs &:before {
+  #tabs &.userItem:before,
+  #tabs & .watchCam:before {
     content: '';
     display: block;
     position: absolute;
     width: 12px;
     height: 11px;
     top: 50%;
-    transform: translateY(-50%) translateX(-120%);
+    transform: translateY(-50%) translateX(-130%);
     border-radius: 2px;
     border: rgba(178, 178, 178, 1) solid 1px;
     border-top-width: 3px;

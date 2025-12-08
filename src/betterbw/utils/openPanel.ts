@@ -7,18 +7,14 @@ export const PANEL_SELECTOR = '.jsPanel.jsPanel-theme-default';
 export const queryPanels = () => document.querySelectorAll<HTMLDivElement>(PANEL_SELECTOR);
 export const queryPanel = (target: HTMLElement | Document) => target.querySelector<HTMLDivElement>(PANEL_SELECTOR);
 
-export function tryToOpenPanel(
-  /** @type {{item: HTMLDivElement, id: string, status: string, bias: number, onlineSince: number}} */ candidate
-) {
+type Candidate = { item: HTMLDivElement; id: string; status: string; bias: number; onlineSince: number };
+
+export function tryToOpenPanel(candidate: Candidate) {
   // console.log('Trying to open panel for', candidate.id);
-  candidate.item.querySelector('.webcamBtn').click();
+  $('.webcamBtn', candidate.item).trigger('click');
 }
 
-export const getCandidates = (
-  /** @type {function({item: HTMLDivElement, id: string, status: string, bias: number, onlineSince: number}, {item: HTMLDivElement, id: string, status: string, bias: number, onlineSince: number}): number} */
-  compareFn = topRandom,
-  _biases = {}
-) => {
+export const getCandidates = (compareFn = topRandom, _biases = {}) => {
   const biases = {
     // "--": 0,
     '-': 1,
@@ -28,7 +24,7 @@ export const getCandidates = (
     ..._biases,
   };
   const userItems = document.querySelectorAll<HTMLDivElement>(
-    '#userList [data-status="online"][data-webcam="true"]:not(:has(.fa.fa-lock))'
+    '#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))'
   );
   const entries: any[] = [];
   for (const item of userItems.values()) {
@@ -54,15 +50,15 @@ export const getCandidates = (
   return entries;
 };
 
-export function openCandidates(candidates, limit?: number) {
+export function openCandidates(candidates: Candidate[]) {
   const opened = queryPanels();
   let openedLength = opened.length || 0;
-  if (openedLength >= 10) return console.log('10 panels already open');
-  const maxToOpen = limit ? Math.min(openedLength + limit, 10) : 10;
+  const maxToOpen = +chatHTML5.roles.user.webcamMax;
+  if (openedLength >= maxToOpen) return console.log(`Max number of panels (${maxToOpen}) already open`);
 
   const openedIds = new Set(Array.from(opened).map((panel) => getUsername(panel)));
   while (openedLength < maxToOpen && candidates.length > 0) {
-    const candidate = candidates.shift();
+    const candidate = candidates.shift()!;
     if (openedIds.has(candidate.id)) continue;
 
     tryToOpenPanel(candidate);

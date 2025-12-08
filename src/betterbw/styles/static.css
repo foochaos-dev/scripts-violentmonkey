@@ -2,12 +2,16 @@ body>div:nth-child(1) {
   height: calc(100% - 4px);
 }
 
-body:not([data-algo]) button[data-sort-order=""],
-body[data-algo=""] button[data-sort-order=""],
-body[data-algo="new"] button[data-sort-order="new"],
-body[data-algo="top"] button[data-sort-order="top"] {
+body:not([data-algo]) button[data-sort-order=''],
+body[data-algo=''] button[data-sort-order=''],
+body[data-algo='new'] button[data-sort-order='new'],
+body[data-algo='top'] button[data-sort-order='top'] {
   color: white;
   background-color: #50c180;
+}
+
+input.numberOfCams {
+  width: 4em;
 }
 
 .panel-action {
@@ -24,28 +28,25 @@ body[data-algo="top"] button[data-sort-order="top"] {
 
   float: right;
   position: relative;
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   top: 2px;
   height: 15px;
   line-height: 0;
   opacity: 1;
-  transition: opacity .2s ease-out;
+  transition: opacity 0.2s ease-out;
 }
 
-.panel-action-btn:where([data-status-value="--"],
-  [data-status-value="-"],
-  [data-status-value="+"],
-  [data-status-value="++"]) {
+.panel-action-btn:where([data-status-value='--'], [data-status-value='-'], [data-status-value='+'], [data-status-value='++']) {
   margin-left: 0;
 }
 
-.jsPanel[data-grid-index]:not([data-grid-index="9"]):not(.ui-draggable-dragging) {
+.jsPanel[data-grid-index][data-actions-attached]:not(.ui-draggable-dragging) {
   transition:
-    top .15s linear,
-    right .15s linear,
-    bottom .15s linear,
-    left .15s linear,
-    box-shadow .2s ease-out;
+    top 0.15s linear,
+    right 0.15s linear,
+    bottom 0.15s linear,
+    left 0.15s linear,
+    box-shadow 0.2s ease-out;
 }
 
 .jsPanel:not(:hover) .panel-action-btn {
@@ -61,7 +62,9 @@ body[data-algo="top"] button[data-sort-order="top"] {
 
   .volume {
     background: yellow;
-    box-shadow: 1px 1px 1px rgb(0, 0, 0), 2px 2px 1px rgb(255, 255, 255);
+    box-shadow:
+      1px 1px 1px rgb(0, 0, 0),
+      2px 2px 1px rgb(255, 255, 255);
   }
 }
 
@@ -69,83 +72,149 @@ body[data-algo="top"] button[data-sort-order="top"] {
   background: #111;
 }
 
-:where(#userMenu, .jsPanel)[data-status="--"] [data-status-value="--"] {
+:where(#userMenu, .jsPanel)[data-status='--'] [data-status-value='--'] {
   background: rgba(205, 0, 0, 1);
   color: #fff;
 }
 
-:where(#userMenu, .jsPanel)[data-status="-"] [data-status-value="-"] {
+:where(#userMenu, .jsPanel)[data-status='-'] [data-status-value='-'] {
   background: rgba(237, 146, 0, 1);
   color: #fff;
 }
 
-:where(#userMenu, .jsPanel)[data-status="+"] [data-status-value="+"] {
+:where(#userMenu, .jsPanel)[data-status='+'] [data-status-value='+'] {
   background: rgba(0, 167, 228, 1);
   color: #fff;
 }
 
-:where(#userMenu, .jsPanel)[data-status="++"] [data-status-value="++"] {
+:where(#userMenu, .jsPanel)[data-status='++'] [data-status-value='++'] {
   background: rgba(149, 50, 255, 1);
   color: #fff;
 }
 
-:where(#userMenu, .jsPanel)[data-is-cooldown="true"] [data-status-value="⏱"] {
+:where(#userMenu, .jsPanel)[data-is-cooldown='true'] [data-status-value='⏱'] {
   background: rgba(50, 50, 50, 1);
   color: #fff;
 }
 
-#userMenu[data-private-cam="true"] [data-action="viewWebcam"] {
+#userMenu .menuUserItem[data-action="whisper"] {
+  display: block !important;
+}
+
+#userMenu[data-private-cam='true'] [data-action='viewWebcam'] {
   color: red;
 
-  .fa:after {
-    content: " \f023";
-    /* font-family: "Font Awesome 5 Free"; */
+  .fa.fa-video-camera:after {
     color: red;
+    content: ' \f023';
+    font-family: 'Font Awesome 5 Free';
     font-weight: 900;
   }
 }
 
-.jsPanel[data-status="undefined"] .jsPanel-title {
+/* #tabs :where(.message, .serverMessage) .userLabel {
+  margin-left: 0;
+  font-size: inherit !important;
+  line-height: inherit;
+  top: inherit;
+  cursor: inherit;
+  vertical-align: bottom;
+} */
+
+#tabs .addPrivateMessage {
+
+  .mention,
+  .userLabelBBW.receiver {
+    pointer-events: none;
+  }
+
+  .name-time {
+    flex-wrap: wrap;
+
+    .content {
+      flex-basis: 100%;
+    }
+  }
+
+  .whisper:after {
+    left: 0;
+    right: auto;
+    width: initial;
+    height: 10px;
+    font-size: 8px;
+    padding-inline: 25px;
+    opacity: 0.75;
+    background: linear-gradient(90deg, transparent 0%, red 25%, red 75%, transparent 100%);
+  }
+}
+
+#tabs .serverMessage[data-private-cam='true']:after,
+#userMenu[data-private-cam='true'] [data-action='viewWebcam'].fa:after {
+  content: ' \f023';
+  font-family: 'Font Awesome 5 Free';
+  color: red;
+  font-weight: 900;
+}
+
+#tabs .serverMessage[data-private-cam='true']:after {
+  margin-left: 20px;
+}
+
+#tabs .webcamOpened .watchCam {
+  position: relative;
+}
+
+.jsPanel .userAvatar {
+  cursor: pointer;
+}
+
+.jsPanel[data-status='undefined'] .jsPanel-title {
   text-decoration-color: orange;
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-thickness: 2px;
 }
 
-.jsPanel[data-status="undefined"] button:where([data-status-value="++"]) {
+.jsPanel[data-status='undefined'] button:where([data-status-value='++']) {
   display: none;
 }
 
-.jsPanel[data-status="--"] button:where([data-status-value="++"]) {
+.jsPanel[data-status='--'] button:where([data-status-value='++']) {
   display: none;
 }
 
-.jsPanel[data-status="-"] button:where([data-status-value="++"]) {
+.jsPanel[data-status='-'] button:where([data-status-value='++']) {
   display: none;
 }
 
-.jsPanel[data-status="+"] button:where([data-status-value="--"]) {
+.jsPanel[data-status='+'] button:where([data-status-value='--']) {
   display: none;
 }
 
-.jsPanel[data-status="++"] button:where([data-status-value="--"]) {
+.jsPanel[data-status='++'] button:where([data-status-value='--']) {
   display: none;
 }
 
-.jsPanel:where([data-rotation=""], [data-rotation="0"]) video {
+.jsPanel:where([data-rotation=''], [data-rotation='0']) video {
   rotate: 0deg;
 }
 
-.jsPanel[data-rotation="90"] video {
+.jsPanel[data-rotation='90'] video {
   rotate: 90deg;
 }
 
-.jsPanel[data-rotation="180"] video {
+.jsPanel[data-rotation='180'] video {
   rotate: 180deg;
 }
 
-.jsPanel[data-rotation="270"] video {
+.jsPanel[data-rotation='270'] video {
   rotate: 270deg;
+}
+
+.jsPanel[data-rotation='90'] video,
+.jsPanel[data-rotation='270'] video {
+  width: 85% !important;
+  margin-left: 7.5%;
 }
 
 .slide_block {
@@ -153,8 +222,7 @@ body[data-algo="top"] button[data-sort-order="top"] {
 }
 
 #usersContainer {
-  --container-width: 240px;
-  width: var(--container-width);
+  width: 240px;
 
   &.leftLayout #slide_block {
     top: 50px;
@@ -254,7 +322,8 @@ body[data-algo="top"] button[data-sort-order="top"] {
 #tabsAndFooter,
 #footer {
   /* width: min(50%, 800px); */
-  width: min(50%, 642px);
+  /* width: min(50%, 642px); */
+  width: min(50%, calc(100% - 1107px));
 }
 
 video.mobile.mobile {

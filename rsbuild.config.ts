@@ -1,52 +1,10 @@
-import { defineConfig, rspack, type Rspack } from '@rsbuild/core';
+import { defineConfig, rspack } from '@rsbuild/core';
 import { getManifest } from './manifest';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import prettier from 'prettier';
+import { PrettierPlugin } from './rsbuild.PrettierPlugin';
+import { RuleJSTS, RuleSCSS } from './rsbuild.PrettierLoader';
+import { StripBlankLinesPlugin } from './rsbuild.StripBlankLinesPlugin';
 
 const isDev = process.env.NODE_ENV !== 'development';
-
-const PrettierPlugin: Rspack.Plugin = (compiler: Rspack.Compiler) => {
-  compiler.hooks.done.tapPromise('PrettierAfterBuild', async (stats) => {
-    try {
-      // try to get the output path from compiler options, fallback to cwd
-      const outPath = (compiler.options && compiler.options.output && compiler.options.output.path) || process.cwd();
-      // stats.toJson({ assets: true }) should contain built asset names
-      const json = (typeof stats.toJson === 'function' && stats.toJson({ assets: true })) || {};
-      const assets = json.assets || [];
-      for (const asset of assets) {
-        const name = asset?.name;
-        if (!name?.endsWith('.user.js')) continue;
-        const filePath = path.join(outPath, name);
-        try {
-          const src = await fs.readFile(filePath, 'utf8');
-          const formatted = await prettier.format(src, {
-            filepath: filePath,
-            endOfLine: 'lf',
-            arrowParens: 'avoid',
-            bracketSpacing: true,
-            bracketSameLine: true,
-            objectWrap: 'collapse',
-            proseWrap: 'never',
-            quoteProps: 'as-needed',
-            semi: true,
-            htmlWhitespaceSensitivity: 'ignore',
-            experimentalOperatorPosition: 'start',
-            trailingComma: 'all',
-          });
-          await fs.writeFile(filePath, formatted, 'utf8');
-        } catch (err) {
-          // keep going on errors (file may be in-memory, missing, or unparseable)
-          // eslint-disable-next-line no-console
-          console.warn('[PrettierAfterBuild] skip', name, err?.['message'] ?? err);
-        }
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[PrettierAfterBuild] plugin failed', err);
-    }
-  });
-};
 
 export default defineConfig({
   mode: 'production', // concatenate modules even on `rsbuild watch`
@@ -55,23 +13,25 @@ export default defineConfig({
     lightningcssLoader: {
       minify: false,
       exclude: {
-        // exclude from processing; what you'd like to keep;
+        // exclude from processing; what you'd like to keep untouched;
         nesting: true,
       },
     },
     rspack: {
-      externals: {
-        jspanel4: 'jsPanel',
-      },
+      externalsType: 'window',
 
       plugins: [
+        // PrettierPlugin(),
+        StripBlankLinesPlugin(),
         new rspack.BannerPlugin({
           banner: getManifest(),
           raw: true, // false = wraps into a comment
           entryOnly: true,
         }),
-        PrettierPlugin,
       ],
+      module: {
+        rules: [RuleJSTS, RuleSCSS],
+      },
       experiments: {
         outputModule: true,
         topLevelAwait: true,
@@ -91,7 +51,6 @@ export default defineConfig({
       },
     },
     swc: {
-      minify: false,
       module: {
         type: 'es6',
       },
@@ -101,6 +60,9 @@ export default defineConfig({
         transform: {
           react: {
             runtime: 'automatic',
+            importSource: 'preact',
+            // pragma: 'h',
+            // pragmaFrag: 'Fragment',
           },
           optimizer: {
             simplify: true,
@@ -122,9 +84,15 @@ export default defineConfig({
             join_vars: false,
             loops: false,
             side_effects: true,
+            inline: 1,
+            passes: 4,
+            keep_fnames: true,
+            keep_classnames: true,
           },
           mangle: false,
           module: true,
+          keep_fnames: true,
+          keep_classnames: true,
           format: {
             comments: false,
           },
@@ -146,10 +114,17 @@ export default defineConfig({
     target: 'web',
     minify: false,
     overrideBrowserslist: ['last 2 chrome version', 'last 2 firefox version'],
-    module: true,
+    module: false,
     legalComments: 'inline',
     filename: {
       js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js',
+    },
+    externals: {
+      jspanel4: 'jsPanel',
+      // preact: 'preact',
+      // preact: './external-preact.js',
+      // preact: 'https://cdn.jsdelivr.net/npm/preact/+esm',
+      // preact: '(await import("https://cdn.jsdelivr.net/npm/preact/+esm"))',
     },
   },
 

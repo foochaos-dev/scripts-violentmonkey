@@ -1,4 +1,4 @@
-type Sortable = {
+export type Sortable = {
   bias: number;
   onlineSince: number;
 };

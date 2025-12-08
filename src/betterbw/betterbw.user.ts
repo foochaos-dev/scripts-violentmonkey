@@ -4,15 +4,16 @@ import { getCandidates, openCandidates } from './utils/openPanel';
 import { waitToBe } from './utils/waitToBe';
 import { setupTools } from './setupTools';
 import { observePanels } from './features/observeOpenPanels';
+import { observeChatNav } from './features/observeChat';
 
-GM_addStyle(rawCss);
-
-const whenRoomsModalClosed = Promise.resolve()
-  .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false'))
-  .then(() => waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') !== 'false'));
-
-whenRoomsModalClosed.then(() => {
-  setupTools();
+export async function main() {
+  GM_addStyle(rawCss);
+  observeChatNav();
   observePanels();
+
+  await waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false');
+  await waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') !== 'false');
+
+  setupTools();
   openCandidates(getCandidates(topRandom));
-});
+}

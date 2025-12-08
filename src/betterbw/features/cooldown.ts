@@ -1,18 +1,27 @@
-import type { JSPanel } from '../types';
+import type { JSPanel } from '../types/JSPanel';
 
 // Cooldown helpers: store expiry timestamps (ms since epoch) using GM_setValue
-export function cooldownIt({ id, minutes = 15, panel }: { id: string; minutes?: number; panel?: JSPanel | null }) {
+export function cooldownIt({
+  username,
+  minutes = 15,
+  panel,
+}: {
+  username: string | undefined;
+  minutes?: number;
+  panel?: Pick<JSPanel, 'id'> | null | undefined;
+}) {
+  if (!username) return;
   const expiry = Date.now() + minutes * 60 * 1000;
-  setCooldown(id, expiry);
-  console.log(`User ${id} put on cooldown until`, new Date(expiry).toISOString());
+  setCooldown(username, expiry);
+  console.log(`User ${username} put on cooldown until`, new Date(expiry).toISOString());
 
-  if (!panel) return;
-  jsPanel.activePanels.getPanel(panel.id)?.close();
+  if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
 }
 
 export function setCooldown(id: string, expiryMs: number) {
   GM_setValue(`${id}_cooldown`, expiryMs);
 }
+
 function getCooldownExpiry(id: string) {
   const val = GM_getValue(`${id}_cooldown`);
   return val ? Number(val) : null;

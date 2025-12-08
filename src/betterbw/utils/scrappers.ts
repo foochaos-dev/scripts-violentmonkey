@@ -1,10 +1,20 @@
-export function getUsername(panel: HTMLDivElement) {
-  const title = panel.querySelector<HTMLHeadingElement>('.jsPanel-title')!;
-  const username = Array.from(title.childNodes)
-    .find((e) => e.nodeType === Node.TEXT_NODE && e.nodeValue?.trim())
-    ?.nodeValue?.trim();
-  const name = username?.split('_')[0];
+import type { StringNumber } from '../types/utils';
 
-  if (!name) console.error(`Couldn't find username on ${title.textContent}`);
-  return name || 'FAIL';
+export function getUsername(panel: HTMLDivElement) {
+  const id = panel.id.split('_')[2] || $('[data-id]', panel)[0]?.dataset.id;
+  return id && getUserById(id)?.username;
+}
+
+function getUserObjectById(userId: string | StringNumber) {
+  return chatHTML5.users[userId as StringNumber];
+}
+
+export function getUserById(userId: string | StringNumber) {
+  const user = getUserObjectById(userId);
+  if (!user) return;
+
+  return {
+    obj: user,
+    username: user.username.split('_')[0]!,
+  };
 }
