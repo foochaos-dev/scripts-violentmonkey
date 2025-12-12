@@ -18,7 +18,7 @@ export default defineConfig({
       },
     },
     rspack: {
-      externalsType: 'window',
+      externalsType: 'umd',
 
       plugins: [
         // PrettierPlugin(),
@@ -121,7 +121,9 @@ export default defineConfig({
     },
     externals: {
       jspanel4: 'jsPanel',
-      // preact: 'preact',
+      preact: 'window preact',
+      'preact/hooks': 'window preactHooks',
+      'preact/jsx-runtime': 'window jsxRuntime',
       // preact: './external-preact.js',
       // preact: 'https://cdn.jsdelivr.net/npm/preact/+esm',
       // preact: '(await import("https://cdn.jsdelivr.net/npm/preact/+esm"))',

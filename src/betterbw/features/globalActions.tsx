@@ -108,6 +108,7 @@ const PanelSizeInput = () => {
       suffix="px"
       min="150"
       step="5"
+      defaultValue={gridconf.WIDTH}
       onChangeEffect={onChangeEffect}
     />
   );
