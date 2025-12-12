@@ -2,19 +2,23 @@ import { queryPanels } from './openPanel';
 
 const base = { my: 'right-top', at: 'right-top' };
 
-const MARGIN_TOP = 30;
-const MARGIN_RIGHT = 5;
-const GAP_X = 4;
-const GAP_Y = 4;
-const WIDTH = 365;
-const HEIGHT = 318;
+export const panelRatio = 318 / 365;
 
-const col = (n: number) => -(MARGIN_RIGHT + n * (WIDTH + GAP_X));
-const row = (n: number) => MARGIN_TOP + n * (HEIGHT + GAP_Y);
-const gridPlace = (c: number, r: number) => ({ ...base, offsetX: col(c), offsetY: row(r) });
+export const gridconf = {
+  MARGIN_TOP: 30,
+  MARGIN_RIGHT: 5,
+  GAP_X: 4,
+  GAP_Y: 4,
+  WIDTH: GM_getValue('config.webcamWidth', 365),
+  HEIGHT: (GM_getValue('config.webcamWidth', 365) * 318) / 365,
+};
 
-const offset = (65 - MARGIN_TOP) / (HEIGHT + GAP_Y);
-const positions3x3plus1 = [
+const col = (n: number) => -(gridconf.MARGIN_RIGHT + n * (gridconf.WIDTH + gridconf.GAP_X));
+const row = (n: number) => gridconf.MARGIN_TOP + n * (gridconf.HEIGHT + gridconf.GAP_Y);
+const gridPlace = (c: number, r: number, offset: number = 0) => ({ ...base, offsetX: col(c), offsetY: row(r) + offset });
+
+const offset = 65 - gridconf.MARGIN_TOP;
+const positions3x3plus1 = () => [
   gridPlace(0, 0),
   gridPlace(0, 1),
   gridPlace(1, 0),
@@ -24,15 +28,15 @@ const positions3x3plus1 = [
   gridPlace(0, 2),
   gridPlace(1, 2),
   gridPlace(2, 2),
-  gridPlace(3, 0 + offset),
-  gridPlace(3, 1 + offset),
-  gridPlace(3, 2 + offset),
-  gridPlace(4, 0 + offset),
-  gridPlace(4, 1 + offset),
-  gridPlace(4, 2 + offset),
+  gridPlace(3, 0, offset),
+  gridPlace(3, 1, offset),
+  gridPlace(3, 2, offset),
+  gridPlace(4, 0, offset),
+  gridPlace(4, 1, offset),
+  gridPlace(4, 2, offset),
 ];
 
-export function organizePanels(positions = positions3x3plus1) {
+export function organizePanels(getPositions = positions3x3plus1) {
   const opened = queryPanels();
   if (!opened.length) return;
 
@@ -92,6 +96,7 @@ export function organizePanels(positions = positions3x3plus1) {
   }
 
   // Apply the position to all the panels
+  const positions = getPositions();
   let idx = -1;
   for (const place of grid) {
     idx++;
@@ -99,6 +104,6 @@ export function organizePanels(positions = positions3x3plus1) {
     if (!place || !position) continue;
 
     const panel = jsPanel.activePanels.getPanel(place.id);
-    if (panel) panel.resize({ width: WIDTH, height: HEIGHT }).reposition(position);
+    if (panel) panel.resize({ width: gridconf.WIDTH, height: gridconf.HEIGHT }).reposition(position);
   }
 }

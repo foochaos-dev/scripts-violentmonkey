@@ -1,11 +1,13 @@
 import { render } from 'preact';
 import { queryPanels } from './utils/openPanel';
 import { MenuActions } from './features/panelActions';
-import { spyOn } from './utils/spyOn';
+import { spyOn, type Watchers } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
 import { setNextCam } from './features/observeOpenPanels';
 import { getUserById } from './utils/scrappers';
 import { AlgoControls } from './features/globalActions';
+import { spyOnConfig } from './features/spyOnConfig';
+import type { ChatHTML5Type } from './types/ChatHTML5';
 
 function setupHeader() {
   const header = $('#header .header-custom-btns')[0];
@@ -70,11 +72,14 @@ function setupSidebar() {
   });
 }
 
+export const ConfigWatchers: Watchers<ChatHTML5Type['config']> = {};
+
 export function setupTools() {
   chatHTML5.config.timeBeforeWatchingCamAgain = '1000';
   chatHTML5.config.checkOwnStream = '1';
   chatHTML5.config.showCountryFlag = '1';
-  chatHTML5.roles.user.webcamMax = 10;
+  chatHTML5.roles.user.webcamMax = GM_getValue('user.webcamMax', 10);
+  const { revoke } = spyOnConfig(ConfigWatchers);
 
   // @ts-expect-error -- fix unreacheable code warning
   chatHTML5.amIMuted = () => chatHTML5.myUser.mutedUntil > Date.now();
@@ -84,4 +89,6 @@ export function setupTools() {
   setupSidebar();
 
   $('#sortWebcamtBtn').trigger('click');
+
+  return revoke;
 }

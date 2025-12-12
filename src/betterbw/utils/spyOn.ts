@@ -1,4 +1,4 @@
-type Watchers<T extends object> = {
+export type Watchers<T extends object> = {
   [K in keyof T]?: (value: T[K]) => void;
 };
 

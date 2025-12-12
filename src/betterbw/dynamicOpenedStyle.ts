@@ -9,7 +9,9 @@ export function updateCssForOpenedPanels() {
   const opened = queryPanels();
   if (!opened?.length) return;
 
-  const usernames = Array.from(opened).map((panel) => getUsername(panel));
+  const usernames = Array.from(opened)
+    .map((panel) => getUsername(panel))
+    .filter((v) => v != null);
   const selectorsIamWatching = usernames.map(dataUsername).join(',');
   const selectorsWatchingMe = usernames
     .map(

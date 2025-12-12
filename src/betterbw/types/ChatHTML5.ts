@@ -10,6 +10,8 @@ export type ChatHTML5Type = {
     timeBeforeWatchingCamAgain: StringNumber;
     checkOwnStream: StringNumber;
     showCountryFlag: StringNumber;
+    webcamWidth: StringNumber;
+    webcamHeight: StringNumber;
     [key: string]: StringNumber;
   };
   roles: {

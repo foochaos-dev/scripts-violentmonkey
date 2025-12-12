@@ -54,7 +54,10 @@ export function openCandidates(candidates: Candidate[]) {
   const opened = queryPanels();
   let openedLength = opened.length || 0;
   const maxToOpen = +chatHTML5.roles.user.webcamMax;
-  if (openedLength >= maxToOpen) return console.log(`Max number of panels (${maxToOpen}) already open`);
+  if (openedLength >= maxToOpen) {
+    organizePanels();
+    return console.log(`Max number of panels (${maxToOpen}) already open`);
+  }
 
   const openedIds = new Set(Array.from(opened).map((panel) => getUsername(panel)));
   while (openedLength < maxToOpen && candidates.length > 0) {

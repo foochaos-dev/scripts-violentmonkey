@@ -326,6 +326,16 @@ input.numberOfCams {
   width: min(50%, calc(100% - 1107px));
 }
 
+#tabsAndFooter {
+  resize: horizontal;
+  overflow: hidden;
+}
+
+#footer {
+  position: relative;
+  width: 100%;
+}
+
 video.mobile.mobile {
   max-width: 100% !important;
   max-height: 100% !important;

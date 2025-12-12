@@ -3,6 +3,8 @@ import { rotateCam } from './rotateCam';
 import { cooldownIt } from './cooldown';
 import { getUsername } from '../utils/scrappers';
 import { render, type MouseEventHandler } from 'preact';
+import type { JSPanel } from '../types/JSPanel';
+import { gridconf } from '../utils/organizePanels';
 
 type BtnProps = { username?: string; getUsername: () => string | undefined; panel?: HTMLDivElement | undefined };
 
@@ -114,13 +116,42 @@ function getLatestUser() {
     return chatHTML5.myUser.id.split('_')[0];
   } catch (e) {
     console.error('Oooops...');
+
+    const muteItem = $('#userMenu [data-action="mute"]')[0];
+    const username = muteItem?.textContent.split(' ').at(-1)?.split('_').at(0);
+    return username;
   }
+}
 
-  const muteItem = $('#userMenu [data-action="mute"]')[0];
-  if (!muteItem) return;
+function resizePanel(panelJS: JSPanel) {
+  panelJS.resize({ width: gridconf.WIDTH, height: gridconf.HEIGHT });
+}
 
-  const username = muteItem.textContent.split(' ').at(-1)?.split('_').at(0);
-  return username;
+function monitorVideoReadiness(video: HTMLVideoElement, panel: HTMLDivElement, panelJS: JSPanel) {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    video.removeEventListener('loadeddata', onVideoReady);
+  };
+
+  const onVideoReady = () => {
+    cleanup();
+  };
+
+  // Also cleanup if panel is closed
+  const originalClose = panelJS.close.bind(panelJS);
+  panelJS.close = function () {
+    cleanup();
+    return originalClose();
+  };
+
+  timeoutId = setTimeout(() => {
+    cooldownIt({ username: getUsername(panel), minutes: 5 });
+    panelJS.close();
+  }, 25000);
+
+  video.addEventListener('loadeddata', onVideoReady);
 }
 
 // Attach control buttons for each declared action
@@ -129,7 +160,7 @@ export function attachPanelActions(panel: HTMLDivElement) {
 
   const panelJS = jsPanel.activePanels.getPanel(panel.id);
   if (!panelJS) return console.warn('Panel not found for', panel.id);
-  panelJS.resize({ width: 365, height: 318 });
+  resizePanel(panelJS);
 
   const header = $('.jsPanel-hdr .jsPanel-title', panel)[0];
   if (!header) return;
@@ -166,7 +197,10 @@ export function attachPanelActions(panel: HTMLDivElement) {
   });
 
   const video = panel.querySelector('video');
-  if (video) video.volume = 0.08;
+  if (video) {
+    video.volume = 0.08;
+    monitorVideoReadiness(video, panel, panelJS);
+  }
 }
 
 export function cleanupPanel(panel: HTMLDivElement) {}
