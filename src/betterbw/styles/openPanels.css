@@ -25,7 +25,6 @@
 .user_watching_me {
   --gridGap: 4px;
   box-shadow: #FFD700 0px 0px 1px var(--gridGap) !important;
-  transition: box-shadow .2s ease-out;
 
   & .jsPanel-headerbar {
     background: gold;

@@ -45,8 +45,7 @@ input.numberOfCams {
     top 0.15s linear,
     right 0.15s linear,
     bottom 0.15s linear,
-    left 0.15s linear,
-    box-shadow 0.2s ease-out;
+    left 0.15s linear;
 }
 
 .jsPanel:not(:hover) .panel-action-btn {
@@ -165,7 +164,22 @@ input.numberOfCams {
 }
 
 .jsPanel .userAvatar {
+  --avatarSize: 22px;
   cursor: pointer;
+  padding: 0;
+  border-radius: var(--avatarSize);
+  height: var(--avatarSize);
+  width: var(--avatarSize);
+  margin-top: -1px;
+  object-fit: cover;
+}
+
+.jsPanel-btn-close {
+  line-height: 1;
+}
+
+.headerPrivateBtn {
+  display: none;
 }
 
 .jsPanel[data-status='undefined'] .jsPanel-title {

@@ -18,9 +18,9 @@ const BtnDisable = () => (
   </button>
 );
 
-export const btnNewClick = () => {
+export const btnNewClick = async () => {
   setAlgo('new');
-  openCandidates(getCandidates(topRandom, { undefined: 9, '+': 8 }));
+  openCandidates(await getCandidates(topRandom, { undefined: 9, '+': 8 }));
 };
 const BtnNew = () => (
   <button data-sort-order="new" title="Prioritize users you haven't liked/disliked before" onClick={btnNewClick}>
@@ -28,9 +28,9 @@ const BtnNew = () => (
   </button>
 );
 
-const btnTopClick = () => {
+const btnTopClick = async () => {
   setAlgo('top');
-  openCandidates(getCandidates(topRandom));
+  openCandidates(await getCandidates(topRandom));
 };
 const BtnTop = () => (
   <button data-sort-order="top" title="Prioritize users you liked more" onClick={btnTopClick}>
@@ -53,7 +53,7 @@ const NumberOfCams = () => {
       if (!maxWebcamreached()) {
         return false;
       } else {
-        chatHTML5.roles.user.webcamMax = +chatHTML5.roles.user.webcamMax + 1;
+        chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber() + 1;
 
         return maxWebcamreached();
       }
@@ -61,7 +61,7 @@ const NumberOfCams = () => {
     const { proxy, revoke } = spyOn(chatHTML5.roles.user, {
       webcamMax: (n) => {
         setValue(n);
-        GM_setValue('user.webcamMax', n);
+        GM.setValue('user.webcamMax', n);
       },
     });
     chatHTML5.roles.user = proxy;
@@ -143,7 +143,7 @@ const MemoInput = <T extends number | string>({
         onChange={(e) => {
           const value = e.currentTarget.value as T;
           setValue(value);
-          GM_setValue(storageKey, value);
+          GM.setValue(storageKey, value);
         }}
       />
       {suffix}

@@ -2,7 +2,7 @@ import { queryPanels } from './openPanel';
 
 const base = { my: 'right-top', at: 'right-top' };
 
-export const panelRatio = 318 / 365;
+export const panelRatio = 314 / 365;
 
 export const gridconf = {
   MARGIN_TOP: 30,
@@ -10,7 +10,7 @@ export const gridconf = {
   GAP_X: 4,
   GAP_Y: 4,
   WIDTH: GM_getValue('config.webcamWidth', 365),
-  HEIGHT: (GM_getValue('config.webcamWidth', 365) * 318) / 365,
+  HEIGHT: GM_getValue('config.webcamWidth', 365) * panelRatio,
 };
 
 const col = (n: number) => -(gridconf.MARGIN_RIGHT + n * (gridconf.WIDTH + gridconf.GAP_X));
@@ -18,25 +18,19 @@ const row = (n: number) => gridconf.MARGIN_TOP + n * (gridconf.HEIGHT + gridconf
 const gridPlace = (c: number, r: number, offset: number = 0) => ({ ...base, offsetX: col(c), offsetY: row(r) + offset });
 
 const offset = 65 - gridconf.MARGIN_TOP;
-const positions3x3plus1 = () => [
-  gridPlace(0, 0),
-  gridPlace(0, 1),
-  gridPlace(1, 0),
-  gridPlace(1, 1),
-  gridPlace(2, 0),
-  gridPlace(2, 1),
-  gridPlace(0, 2),
-  gridPlace(1, 2),
-  gridPlace(2, 2),
-  gridPlace(3, 0, offset),
-  gridPlace(3, 1, offset),
-  gridPlace(3, 2, offset),
-  gridPlace(4, 0, offset),
-  gridPlace(4, 1, offset),
-  gridPlace(4, 2, offset),
-];
 
-export function organizePanels(getPositions = positions3x3plus1) {
+function* positions3x3plus1() {
+  for (let c = 0; c < 3; c++) for (let r = 0; r < 2; r++) yield gridPlace(c, r);
+
+  for (let c = 0; c < 3; c++) yield gridPlace(c, 2);
+
+  let c = 3;
+  do {
+    for (let r = 0; r < 3; r++) yield gridPlace(c, r, offset);
+  } while (c++);
+}
+
+export function organizePanels(getPositions = positions3x3plus1()) {
   const opened = queryPanels();
   if (!opened.length) return;
 
@@ -96,11 +90,8 @@ export function organizePanels(getPositions = positions3x3plus1) {
   }
 
   // Apply the position to all the panels
-  const positions = getPositions();
-  let idx = -1;
   for (const place of grid) {
-    idx++;
-    const position = positions[idx];
+    const position = getPositions.next().value;
     if (!place || !position) continue;
 
     const panel = jsPanel.activePanels.getPanel(place.id);

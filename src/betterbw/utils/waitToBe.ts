@@ -1,7 +1,7 @@
 export function waitToBe(
   selector: string,
   attributeFilter: string[] = ['aria-hidden'],
-  predicate: (arg0: HTMLElement) => boolean = (el) => el.getAttribute('aria-hidden') !== 'false'
+  predicate: (el: HTMLElement) => boolean = (el) => el.getAttribute('aria-hidden') !== 'false'
 ) {
   return new Promise((resolve) => {
     let attrObserver: MutationObserver | null = null;

@@ -9,6 +9,4 @@ declare global {
 
   const jsPanel: Window['jsPanel'];
   const chatHTML5: Window['chatHTML5'];
-
-  const GM_getValues: <TValue>(name: string[]) => TValue[];
 }

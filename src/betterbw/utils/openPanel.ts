@@ -1,20 +1,21 @@
 import { isOnCooldown } from '../features/cooldown';
+import { isDefined } from './filters';
 import { organizePanels } from './organizePanels';
 import { getUsername } from './scrappers';
 import { topRandom } from './sortFunctions';
 
 export const PANEL_SELECTOR = '.jsPanel.jsPanel-theme-default';
 export const queryPanels = () => document.querySelectorAll<HTMLDivElement>(PANEL_SELECTOR);
-export const queryPanel = (target: HTMLElement | Document) => target.querySelector<HTMLDivElement>(PANEL_SELECTOR);
+export const queryPanel = (target: HTMLElement | Document = document) => target.querySelector<HTMLDivElement>(PANEL_SELECTOR);
 
-type Candidate = { item: HTMLDivElement; id: string; status: string; bias: number; onlineSince: number };
+export type Candidate = Awaited<ReturnType<typeof getCandidates>>[number];
 
 export function tryToOpenPanel(candidate: Candidate) {
   // console.log('Trying to open panel for', candidate.id);
   $('.webcamBtn', candidate.item).trigger('click');
 }
 
-export const getCandidates = (compareFn = topRandom, _biases = {}) => {
+export const getCandidates = async (compareFn = topRandom, _biases = {}) => {
   const biases = {
     // "--": 0,
     '-': 1,
@@ -26,26 +27,26 @@ export const getCandidates = (compareFn = topRandom, _biases = {}) => {
   const userItems = document.querySelectorAll<HTMLDivElement>(
     '#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))'
   );
-  const entries: any[] = [];
-  for (const item of userItems.values()) {
-    const id = item.dataset.username?.split('_')[0];
-    if (!id) continue;
-    const status = GM_getValue<string>(`${id}_status`);
-    // skip users explicitly faded out
-    if (status === '--') continue;
-    // skip users currently on cooldown
-    if (isOnCooldown(id)) continue;
+  const values = Array.from(userItems.values());
+  const promises = values.map(async (item) => {
+    const username = item.dataset.username?.split('_')[0];
+    if (!username) return;
 
-    entries.push({
+    const status = await GM.getValue<string>(`${username}_status`);
+    // skip users explicitly faded out
+    if (status === '--') return;
+    // skip users currently on cooldown
+    if (await isOnCooldown(username)) return;
+
+    return {
       item,
-      id,
+      username,
       status,
       bias: biases[status],
       onlineSince: parseInt(item.querySelector<HTMLDivElement>('.userLabel [data-date]')?.dataset.date || '0'),
-    });
-  }
-
-  entries.sort(compareFn);
+    };
+  });
+  const entries = await Promise.all(promises).then((list) => list.filter(isDefined).sort(compareFn));
 
   return entries;
 };
@@ -61,10 +62,10 @@ export function openCandidates(candidates: Candidate[]) {
 
   const openedIds = new Set(Array.from(opened).map((panel) => getUsername(panel)));
   while (openedLength < maxToOpen && candidates.length > 0) {
-    const candidate = candidates.shift()!;
-    if (openedIds.has(candidate.id)) continue;
+    const c = candidates.shift()!;
+    if (openedIds.has(c.username)) continue;
 
-    tryToOpenPanel(candidate);
+    tryToOpenPanel(c);
     openedLength++;
   }
 

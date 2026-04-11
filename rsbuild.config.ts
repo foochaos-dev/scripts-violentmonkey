@@ -18,6 +18,7 @@ export default defineConfig({
       },
     },
     rspack: {
+      devtool: false,
       externalsType: 'umd',
 
       plugins: [
@@ -48,6 +49,8 @@ export default defineConfig({
         minimize: false,
         moduleIds: 'named',
         chunkIds: 'named',
+        emitOnErrors: true,
+        mangleExports: false, // do not rename `default` to `A`, for instance
       },
     },
     swc: {
@@ -109,6 +112,9 @@ export default defineConfig({
   },
   performance: {
     // removeConsole: ['log'], // This just removes the `console.log(` and the `)`, but continue calling every parameter; Prefer swc.jsc.minify.compress.drop_console = true
+    chunkSplit: {
+      strategy: 'all-in-one',
+    },
   },
   output: {
     target: 'web',
@@ -116,6 +122,7 @@ export default defineConfig({
     overrideBrowserslist: ['last 2 chrome version', 'last 2 firefox version'],
     module: false,
     legalComments: 'inline',
+    sourceMap: false,
     filename: {
       js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js',
     },

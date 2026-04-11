@@ -23,8 +23,7 @@ const BtnClassify = ({
       onClick={(e) => {
         const username = getUsername();
         if (username) {
-          GM_setValue(`${username}_status`, value);
-          refreshDynamicStyle();
+          GM.setValue(`${username}_status`, value).then(() => refreshDynamicStyle());
         }
 
         // TODO: use a state manager and have the panel status updating itself
@@ -76,9 +75,16 @@ const BtnRotate = ({ panel, getUsername }: BtnProps) => {
 };
 
 const BtnCooldown = ({ panel, getUsername }: BtnProps) => {
-  const onClick = () => cooldownIt({ username: getUsername(), panel });
+  const onClick = (event) => {
+    if (event?.shiftKey) cooldownIt({ username: getUsername(), panel, minutes: 120 });
+    else cooldownIt({ username: getUsername(), panel });
+  };
   return (
-    <button title={'Cooldown 15m\nDo not suggest this person for the next 15 minutes'} className="panel-action-btn" onClick={onClick}>
+    <button
+      title={'Cooldown 15m\nDo not suggest this person for the next 15 minutes\n\nShift + click: Cooldown 2h'}
+      className="panel-action-btn"
+      onClick={onClick}
+    >
       ⏱
     </button>
   );
@@ -155,7 +161,7 @@ function monitorVideoReadiness(video: HTMLVideoElement, panel: HTMLDivElement, p
 }
 
 // Attach control buttons for each declared action
-export function attachPanelActions(panel: HTMLDivElement) {
+export async function attachPanelActions(panel: HTMLDivElement) {
   if (panel.dataset.actionsAttached === '1') return;
 
   const panelJS = jsPanel.activePanels.getPanel(panel.id);
@@ -168,7 +174,7 @@ export function attachPanelActions(panel: HTMLDivElement) {
   const username = getUsername(panel);
   if (!username) return;
   panel.dataset.username = username;
-  panel.dataset.status = GM_getValue(`${username}_status`);
+  panel.dataset.status = await GM.getValue(`${username}_status`);
 
   const actions = document.createElement('div');
   actions.className = 'panel-action';
@@ -176,11 +182,17 @@ export function attachPanelActions(panel: HTMLDivElement) {
   render(<PanelActions username={username} panel={panel} />, actions);
 
   panel.dataset.actionsAttached = '1';
-  panel.dataset.rotation = GM_getValue(`${username}_rotation`);
+  panel.dataset.rotation = await GM.getValue(`${username}_rotation`);
 
-  $('.jsPanel-btn.jsPanel-btn-close', panel).on('click', () => {
-    cooldownIt({ username: username, minutes: 1 });
-  });
+  $('.jsPanel-btn.jsPanel-btn-close', panel)
+    .attr('title', 'Close\n\nHold [Shift]: also reduce the # of cams')
+    .on('click', (event) => {
+      if (event.shiftKey) {
+        chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // getWebcamNumber() is already updated
+      }
+
+      cooldownIt({ username: username, minutes: 1 });
+    });
 
   $('.userAvatar', panel).on('click', (event) => {
     event.stopPropagation();

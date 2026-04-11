@@ -1,5 +1,5 @@
 import { topRandom } from './utils/sortFunctions';
-import rawCss from './styles/static.css?inline';
+import staticCss from './styles/static.css?inline';
 import { getCandidates, openCandidates } from './utils/openPanel';
 import { waitToBe } from './utils/waitToBe';
 import { setupTools } from './setupTools';
@@ -7,13 +7,12 @@ import { observePanels } from './features/observeOpenPanels';
 import { observeChatNav } from './features/observeChat';
 
 export async function main() {
-  GM_addStyle(rawCss);
+  GM.addStyle(staticCss);
   observeChatNav();
   observePanels();
 
-  await waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false');
-  await waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') !== 'false');
+  await waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false').then(() => waitToBe('#roomsModal'));
 
-  setupTools();
-  openCandidates(getCandidates(topRandom));
+  await setupTools();
+  openCandidates(await getCandidates(topRandom));
 }

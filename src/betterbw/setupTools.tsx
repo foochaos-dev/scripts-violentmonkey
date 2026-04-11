@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { queryPanels } from './utils/openPanel';
+import { PANEL_SELECTOR, queryPanels } from './utils/openPanel';
 import { MenuActions } from './features/panelActions';
 import { spyOn, type Watchers } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
@@ -9,7 +9,7 @@ import { AlgoControls } from './features/globalActions';
 import { spyOnConfig } from './features/spyOnConfig';
 import type { ChatHTML5Type } from './types/ChatHTML5';
 
-function setupHeader() {
+async function setupHeader() {
   const header = $('#header .header-custom-btns')[0];
   if (!header) return;
 
@@ -20,7 +20,7 @@ function setupHeader() {
   render(<AlgoControls />, controls);
 }
 
-function setupUserMenu() {
+async function setupUserMenu() {
   const userMenu = $('#userMenu')[0];
   if (!userMenu) return;
 
@@ -30,35 +30,41 @@ function setupUserMenu() {
   render(<MenuActions />, controls);
 
   chatHTML5.myUser = spyOn(chatHTML5.myUser, {
-    selectedUserid: (selectedUserid) => {
+    selectedUserid: async (selectedUserid) => {
       const nuser = getUserById(selectedUserid);
       if (!nuser) return;
+      userMenu.dataset.status = await GM.getValue(`${nuser.username}_status`);
       userMenu.dataset.username = nuser.username;
-      userMenu.dataset.status = GM_getValue(`${nuser.username}_status`);
-      userMenu.dataset.isCooldown = Boolean(isOnCooldown(nuser.username)).toString();
+      userMenu.dataset.isCooldown = Boolean(await isOnCooldown(nuser.username)).toString();
       userMenu.dataset.privateCam = Boolean(!nuser.obj.webcamPublic).toString();
     },
   }).proxy;
 }
 
-function setupSidebar() {
+async function setupSidebar() {
   const userList = document.getElementById('userList');
   if (!userList) return;
 
   $(userList).on('click', '.webcamBtn', function (event) {
-    const opened = queryPanels();
+    if (event.shiftKey) return;
+
+    const webcamNumber = chatHTML5.getWebcamNumber();
     const webcamMax = +chatHTML5.roles.user.webcamMax;
-    if (opened.length < webcamMax) return;
+    if (webcamNumber < webcamMax) return;
 
     const nextUser = $(this).closest<HTMLDivElement>('.userItem')[0];
-    if (nextUser) {
+    if (!nextUser?.dataset.id) return;
+
+    const user = getUserById(nextUser.dataset.id);
+    if (!user) return;
+
+    if (user.obj.webcamPublic) {
       // event.preventDefault();
       event.stopPropagation();
       // event.stopImmediatePropagation();
       setNextCam(nextUser);
-
-      const panel = $(`[data-grid-index="${webcamMax - 1}"]`)[0];
-      if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
+      const panel = getPanelToClose(webcamNumber);
+      if (panel?.id) jsPanel.activePanels.getPanel(panel.id)?.close();
     }
   });
 
@@ -74,7 +80,22 @@ function setupSidebar() {
 
 export const ConfigWatchers: Watchers<ChatHTML5Type['config']> = {};
 
-export function setupTools() {
+function getPanelToClose(webcamNumber: number) {
+  if (webcamNumber <= 0) return null;
+
+  const optionA = $(`${PANEL_SELECTOR}:not(.user_watching_me)[data-status="--"]`)[0];
+  if (optionA) return optionA;
+
+  for (let i = webcamNumber; i > 0; i--) {
+    const optionB = $(`${PANEL_SELECTOR}[data-grid-index="${i}"]`)[0];
+    if (optionB) return optionB;
+  }
+
+  const panels = queryPanels();
+  return panels[panels.length - 1] || null;
+}
+
+export async function setupTools() {
   chatHTML5.config.timeBeforeWatchingCamAgain = '1000';
   chatHTML5.config.checkOwnStream = '1';
   chatHTML5.config.showCountryFlag = '1';
@@ -84,9 +105,7 @@ export function setupTools() {
   // @ts-expect-error -- fix unreacheable code warning
   chatHTML5.amIMuted = () => chatHTML5.myUser.mutedUntil > Date.now();
 
-  setupHeader();
-  setupUserMenu();
-  setupSidebar();
+  await Promise.all([setupHeader(), setupUserMenu(), setupSidebar()]);
 
   $('#sortWebcamtBtn').trigger('click');
 

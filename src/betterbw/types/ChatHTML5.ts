@@ -23,6 +23,7 @@ export type ChatHTML5Type = {
 
   maxWebcamreached: () => boolean;
   maxWebcamreached_original: () => boolean;
+  getWebcamNumber: () => number;
 };
 
 export interface User {

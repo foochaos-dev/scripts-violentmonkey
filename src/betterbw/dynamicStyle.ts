@@ -1,15 +1,16 @@
 import { dataUsername } from './utils/formatters';
 import tiersCss from './styles/tiers.css?inline';
+import { enqueueAsync } from './utils/debounce';
 
 const dataUserItems = (group: string[]) => group.map(dataUsername).join(',');
 
 async function getCSS() {
-  const arrayOfKeys = GM_listValues().filter((key) => key.match(/\.*?_status/));
-  const values = GM_getValues<string>(arrayOfKeys);
+  const keys = (await GM.listValues()).filter((key) => key.match(/\.*?_status/));
+  const valuesEntries = await Promise.all(keys.map(async (key) => [key, await GM.getValue<string>(key)] as const));
 
   // Group users
   const groups = { '--': [], '-': [], '+': [], '++': [] };
-  for (const [key, value] of Object.entries(values)) {
+  for (const [key, value] of valuesEntries) {
     const id = key.split('_')[0];
     groups[value].push(id);
   }
@@ -28,5 +29,9 @@ async function getCSS() {
 }
 
 export const dynamicStyle = GM_addStyle('');
-export const refreshDynamicStyle = async () => requestAnimationFrame(async () => (dynamicStyle.innerHTML = await getCSS()));
+
+export const refreshDynamicStyle = enqueueAsync(async () => {
+  dynamicStyle.innerHTML = await getCSS();
+});
+
 refreshDynamicStyle();
