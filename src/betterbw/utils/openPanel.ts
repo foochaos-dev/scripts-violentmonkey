@@ -1,5 +1,6 @@
-import { isOnCooldown } from '../features/cooldown';
+import { isOnCooldown, sessionCooldown } from '../features/cooldown';
 import { isDefined } from './filters';
+import { dataUsername } from './formatters';
 import { organizePanels } from './organizePanels';
 import { getUsername } from './scrappers';
 import { topRandom } from './sortFunctions';
@@ -29,8 +30,11 @@ export const getCandidates = async (compareFn = topRandom, _biases = {}) => {
   );
   const values = Array.from(userItems.values());
   const promises = values.map(async (item) => {
-    const username = item.dataset.username?.split('_')[0];
+    const full_username = item.dataset.username;
+    const username = full_username?.split('_')[0];
     if (!username) return;
+    // recently requested kicked out bug
+    if (sessionCooldown.has(full_username)) return;
 
     const status = await GM.getValue<string>(`${username}_status`);
     // skip users explicitly faded out

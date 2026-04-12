@@ -1,5 +1,7 @@
+import { render } from 'preact';
 import { observeIt } from '../utils/observeIt';
 import { getUserById } from '../utils/scrappers';
+import { sessionCooldown } from './cooldown';
 import { clickOnCurrentAlgoButton } from './globalActions';
 
 // CASE: User opened their webcam
@@ -79,14 +81,14 @@ function handlePrivateRequested(message: HTMLElement) {
   const match = textContent.match(/\s*(\S+?)\s+has invited you to watch his cam/);
   if (!match) return;
 
-  const username = match[1];
-  if (!username) return;
+  const full_username = match[1];
+  if (!full_username) return;
 
   // Create span with username
   const span = document.createElement('span');
   span.className = 'userLabelBBW';
-  span.dataset.username = username;
-  span.textContent = username;
+  span.dataset.username = full_username;
+  span.textContent = full_username;
   // Insert span before the text node
   message.insertBefore(span, textNode);
 
@@ -96,7 +98,38 @@ function handlePrivateRequested(message: HTMLElement) {
 
 // CASE: I requested someone's cam
 // <div class="serverMessage webcamRequest"><i class="fa fa-video-camera"></i> You requested webcam of  Popper0Bator</div>
-function handleWebcamRequest(message: HTMLElement) {}
+function handleWebcamRequest(message: HTMLElement) {
+  const textNode = Array.from(message.childNodes).find((n) => n.nodeType === 3 && n.textContent?.trim());
+  if (!textNode || !textNode.textContent) return;
+  const textContent = textNode.textContent;
+
+  // Extract username (ignore leading whitespace)
+  const match = textContent.match(/You requested webcam of\s*(\S+)/);
+  if (!match) return;
+
+  const full_username = match[1];
+  if (!full_username) return;
+
+  const user = chatHTML5.getUserByUsername(full_username);
+  if (!user) return;
+
+  // Remove the username from the remaining text
+  textNode.textContent = textContent.replace(/(^.*? of )(\s+.*$)/, '$1');
+
+  // Create span with username
+  const span = document.createElement('span');
+  span.className = 'userLabelBBW';
+  span.dataset.username = full_username;
+  span.textContent = full_username;
+  // Insert span before the text node
+  message.appendChild(span);
+
+  if (user.webcamPublic) {
+    sessionCooldown.add(full_username);
+    setTimeout(() => sessionCooldown.delete(full_username), 30 * 60_000);
+    message.append(' (unexpected)');
+  }
+}
 
 function handleChatMessage(message: HTMLElement) {
   if (message.matches('.serverMessage.webcamOpened')) handleWebcamOpened(message);

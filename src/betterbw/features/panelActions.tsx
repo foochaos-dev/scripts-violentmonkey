@@ -185,7 +185,7 @@ export async function attachPanelActions(panel: HTMLDivElement) {
   panel.dataset.rotation = await GM.getValue(`${username}_rotation`);
 
   $('.jsPanel-btn.jsPanel-btn-close', panel)
-    .attr('title', 'Close\n\nHold [Shift]: also reduce the # of cams')
+    .attr('title', 'Close\n\nShift + click: also reduce the # of cams')
     .on('click', (event) => {
       if (event.shiftKey) {
         chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // getWebcamNumber() is already updated

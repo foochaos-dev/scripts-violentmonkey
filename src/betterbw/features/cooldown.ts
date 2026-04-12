@@ -23,3 +23,5 @@ export async function isOnCooldown(id: string) {
   if (!val) return null;
   return Date.now() < Number(val);
 }
+
+export const sessionCooldown = new Set<string>();

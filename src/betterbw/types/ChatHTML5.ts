@@ -24,10 +24,12 @@ export type ChatHTML5Type = {
   maxWebcamreached: () => boolean;
   maxWebcamreached_original: () => boolean;
   getWebcamNumber: () => number;
+  getUserByUsername: (username: string) => User;
 };
 
 export interface User {
   id: number;
+  /** Full username, with underscore */
   username: string;
   isGuest?: boolean;
   image: string;

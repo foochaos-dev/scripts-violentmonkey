@@ -2,7 +2,7 @@ import type { StringNumber } from '../types/utils';
 
 export function getUsername(panel: HTMLDivElement) {
   const id = panel.id.split('_')[2] || $('[data-id]', panel)[0]?.dataset.id;
-  return id && getUserById(id)?.username;
+  return id && getUserById(id)?.username?.split('_')?.[0];
 }
 
 function getUserObjectById(userId: string | StringNumber) {

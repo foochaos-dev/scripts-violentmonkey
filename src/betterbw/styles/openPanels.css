@@ -46,3 +46,14 @@
     font-size: 14px;
   }
 }
+
+.watching_private_cam {
+  display: block;
+  position: absolute;
+  color: red;
+  content: ' \f023';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  top: 1px;
+  left: 45px;
+}

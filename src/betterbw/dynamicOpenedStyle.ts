@@ -15,13 +15,29 @@ export function updateCssForOpenedPanels() {
     .filter(isDefined);
   const selectorsIamWatching = usernames.map(dataUsername).join(',');
   const selectorsWatchingMe = usernames
-    .map(
-      (id) => `body:has(#userList .userItem:where(${dataUsername(id)}) .eye-icon .isWatching) .jsPanel[data-username="${id}"]`
-      // (id) => `body:has(#userList .userItem:where(${dataUsername(id)})) .jsPanel[data-username="${id}"]`
-    )
+    .map((id) => `body:has(#userList .userItem:where(${dataUsername(id)}) .eye-icon .isWatching) .jsPanel[data-username="${id}"]`)
     .join(', ');
 
-  dynamicOpenedStyle.innerHTML = openPanelsCss
-    .replace(/\[data-username="I_am_watching"\]/g, selectorsIamWatching)
-    .replace(/\.user_watching_me/g, selectorsWatchingMe);
+  const selectorsWatchingPrivateCams = usernames
+    .map(
+      (id) =>
+        `body:has(#userList .userItem:where(${dataUsername(id)}) .webcamBtn.visible i.lock.fa-lock) .jsPanel[data-username="${id}"] .jsPanel-title>span:before`
+    )
+    .join(',');
+
+  dynamicOpenedStyle.innerHTML = openPanelsCss.replace(
+    /(\.watching_private_cam|\.user_watching_me|\[data-username="I_am_watching"\])/g,
+    (arg) => {
+      switch (arg) {
+        case '.watching_private_cam':
+          return selectorsWatchingPrivateCams;
+        case '.user_watching_me':
+          return selectorsWatchingMe;
+        case '[data-username="I_am_watching"]':
+          return selectorsIamWatching;
+        default:
+          return arg;
+      }
+    }
+  );
 }
