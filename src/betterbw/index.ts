@@ -1,5 +1,7 @@
-import { main } from './betterbw.user';
+import { main, topLevelStyles } from './betterbw.user';
 
-chatHTML5.myUser.mutedUsers = chatHTML5.myUser.mutedUsers || '';
-
-main();
+if (location.pathname.startsWith('/html5-chat/chatroom')) {
+  topLevelStyles();
+} else if (location.pathname.startsWith('//html5-chat/chat2') && typeof chatHTML5 !== 'undefined') {
+  main();
+}

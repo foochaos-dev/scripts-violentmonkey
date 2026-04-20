@@ -254,10 +254,39 @@ input.numberOfCams {
   }
 }
 
-#myWebcamContainer .btn {
-  text-wrap: inherit;
-  line-height: 1 !important;
+#myWebcamContainer {
+  .btn {
+    text-wrap: inherit;
+    line-height: 1 !important;
+  }
+
+  #myAudioVideoCheckBoxContainer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    text-wrap: nowrap;
+  }
+
+  #myAudioVideoCheckBoxContainer .btn {
+    min-height: 1rem;
+  }
+
+  #myWebcamDiv>button {
+    transform: translateY(-15px) scaleY(.25);
+    transition: transform .2s ease-out;
+  }
+
+  #myWebcamDiv>div {
+    transform: translateY(-7px) scaleY(.25);
+    transition: transform .2s ease-out;
+  }
+
+  &:hover #myWebcamDiv>button,
+  &:hover #myWebcamDiv>div {
+    transform: initial;
+  }
 }
+
 
 #userList .userItem {
   border-bottom: none;

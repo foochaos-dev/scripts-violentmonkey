@@ -17,6 +17,7 @@ export type ChatHTML5Type = {
   roles: {
     user: {
       webcamMax: StringNumber;
+      power?: number;
     };
   };
   users: Record<StringNumber, User>;
@@ -25,6 +26,9 @@ export type ChatHTML5Type = {
   maxWebcamreached_original: () => boolean;
   getWebcamNumber: () => number;
   getUserByUsername: (username: string) => User;
+  updateNumberUsersDisplay: () => void;
+  getUserPositionInList: (user: User) => number;
+  showOnTopofUserList: (user: User) => boolean;
 };
 
 export interface User {

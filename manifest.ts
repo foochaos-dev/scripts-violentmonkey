@@ -1,9 +1,10 @@
-export const getManifest = ({ version = '1.4.0' } = {}) =>
+export const getManifest = ({ version = '1.4.1' } = {}) =>
   `// ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts
 // @version     ${version}
 // @author      Thick Bro
+// @match       https://bateworld.com/html5-chat/chatroom.php
 // @match       https://bateworld.com//html5-chat/chat2/*
 // @grant       GM_addStyle
 // @grant       GM.addStyle
