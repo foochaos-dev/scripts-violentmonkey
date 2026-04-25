@@ -43,7 +43,7 @@ export const clickOnCurrentAlgoButton = debounce((): void => {
   if (algo === 'new') btnNewClick();
   else if (algo === 'top') btnTopClick();
   else if (algo === '') organizePanels();
-}, 200);
+});
 
 const NumberOfCams = () => {
   const [value, setValue] = useState<StringNumber>(() => GM_getValue('user.webcamMax', 10));

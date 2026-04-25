@@ -16,7 +16,7 @@ function hacks() {
   chatHTML5.myUser.mutedUsers = chatHTML5.myUser.mutedUsers || '';
 
   const original_updateNumberUsersDisplay = chatHTML5.updateNumberUsersDisplay;
-  chatHTML5.updateNumberUsersDisplay = debounce(original_updateNumberUsersDisplay, 200);
+  chatHTML5.updateNumberUsersDisplay = debounce(original_updateNumberUsersDisplay);
 }
 
 export async function main() {

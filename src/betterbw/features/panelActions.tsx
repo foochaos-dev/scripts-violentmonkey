@@ -5,6 +5,8 @@ import { getUsername } from '../utils/scrappers';
 import { render, type MouseEventHandler } from 'preact';
 import type { JSPanel } from '../types/JSPanel';
 import { gridconf } from '../utils/organizePanels';
+import { debounce } from '../utils/debounce';
+import { sessionAudioMuted } from './audioMuted';
 
 type BtnProps = { username?: string; getUsername: () => string | undefined; panel?: HTMLDivElement | undefined };
 
@@ -210,7 +212,16 @@ export async function attachPanelActions(panel: HTMLDivElement) {
 
   const video = panel.querySelector('video');
   if (video) {
-    video.volume = 0.08;
+    if (sessionAudioMuted.get(username)) video.muted = true;
+    video.volume = await GM.getValue(`${username}_volume`, 0.08);
+
+    video.addEventListener(
+      'volumechange',
+      debounce(async () => {
+        sessionAudioMuted.set(username, video.muted);
+        await GM.setValue(`${username}_volume`, video.volume);
+      })
+    );
     monitorVideoReadiness(video, panel, panelJS);
   }
 }

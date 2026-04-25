@@ -1,4 +1,4 @@
-export function debounce(func: Function, wait: number) {
+export function debounce(func: Function, wait: number = 200) {
   let timeout: ReturnType<typeof setTimeout>;
   return function (...args) {
     // @ts-expect-error -- this should be set at runtime
