@@ -7,6 +7,7 @@ import type { JSPanel } from '../types/JSPanel';
 import { gridconf } from '../utils/organizePanels';
 import { debounce } from '../utils/debounce';
 import { sessionAudioMuted } from './audioMuted';
+import { clamp, fixedFloat } from '../utils/math';
 
 type BtnProps = { username?: string; getUsername: () => string | undefined; panel?: HTMLDivElement | undefined };
 
@@ -215,15 +216,52 @@ export async function attachPanelActions(panel: HTMLDivElement) {
     if (sessionAudioMuted.get(username)) video.muted = true;
     video.volume = await GM.getValue(`${username}_volume`, 0.08);
 
-    video.addEventListener(
-      'volumechange',
-      debounce(async () => {
-        sessionAudioMuted.set(username, video.muted);
-        await GM.setValue(`${username}_volume`, video.volume);
-      })
-    );
+    scrollChangesVolume(video);
+    persistVolumeChange(video, username);
     monitorVideoReadiness(video, panel, panelJS);
   }
+}
+
+function persistVolumeChange(video: HTMLVideoElement, username: string) {
+  video.addEventListener(
+    'volumechange',
+    debounce(async () => {
+      sessionAudioMuted.set(username, video.muted);
+      await GM.setValue(`${username}_volume`, video.volume);
+    })
+  );
+}
+
+function scrollChangesVolume(video: HTMLVideoElement) {
+  let acc = 0;
+  let wheelHandler: ((event: WheelEvent) => void) | null = null;
+  let theWheelHandler = debounce((event: WheelEvent) => {
+    event.preventDefault();
+    if (event.deltaMode === 0) {
+      acc = acc + event.deltaY;
+      if (Math.abs(acc) <= 6) return;
+      else acc = acc % 6;
+    }
+
+    const volumeStep = video.volume <= 0.5 ? 0.005 : video.volume <= 0.16 ? 0.01 : video.volume <= 0.32 ? 0.02 : 0.05;
+    const deltaY = event.deltaY > 0 ? volumeStep : -volumeStep;
+    video.volume = fixedFloat(clamp(0, video.volume + deltaY, 1), 3);
+  }, 4);
+
+  video.addEventListener('mouseenter', () => {
+    if (wheelHandler) return; // Already attached
+
+    acc = 0;
+    wheelHandler = theWheelHandler;
+    video.addEventListener('wheel', wheelHandler);
+  });
+
+  video.addEventListener('mouseleave', () => {
+    if (!wheelHandler) return; // Already removed
+
+    video.removeEventListener('wheel', wheelHandler);
+    wheelHandler = null;
+  });
 }
 
 export function cleanupPanel(panel: HTMLDivElement) {}
