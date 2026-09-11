@@ -21,7 +21,19 @@ export function cooldownIt({
 export async function isOnCooldown(id: string) {
   const val = await GM.getValue(`${id}_cooldown`);
   if (!val) return null;
-  return Date.now() < Number(val);
+  if (Date.now() < Number(val)) return true;
+
+  GM.deleteValue(`${id}_cooldown`); // Expired
+  return false;
+}
+
+/** Deletes expired cooldowns of users that never came back, so the storage doesn't grow forever */
+export async function sweepExpiredCooldowns() {
+  const keys = (await GM.listValues()).filter((key) => key.endsWith('_cooldown'));
+  const now = Date.now();
+  for (const key of keys) {
+    if (now >= Number(await GM.getValue(key))) await GM.deleteValue(key);
+  }
 }
 
 export const sessionCooldown = new Set<string>();

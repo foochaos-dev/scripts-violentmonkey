@@ -1,3 +1,4 @@
+import { clamp } from './math';
 import { queryPanels } from './openPanel';
 
 const base = { my: 'right-top', at: 'right-top' };
@@ -9,31 +10,70 @@ export const gridconf = {
   MARGIN_RIGHT: 5,
   GAP_X: 4,
   GAP_Y: 4,
-  WIDTH: GM_getValue('config.webcamWidth', 365),
-  HEIGHT: GM_getValue('config.webcamWidth', 365) * panelRatio,
+  // Stored as the input's string value
+  WIDTH: +GM_getValue('config.webcamWidth', 365),
+  HEIGHT: +GM_getValue('config.webcamWidth', 365) * panelRatio,
 };
 
-const col = (n: number) => -(gridconf.MARGIN_RIGHT + n * (gridconf.WIDTH + gridconf.GAP_X));
-const row = (n: number) => gridconf.MARGIN_TOP + n * (gridconf.HEIGHT + gridconf.GAP_Y);
-const gridPlace = (c: number, r: number, offset: number = 0) => ({ ...base, offsetX: col(c), offsetY: row(r) + offset });
+const MIN_WIDTH = 120;
+const BASE_COLS = 3; // The chat's default width leaves room for this many columns of the configured size
+const BASE_CAMS = 9; // Cams beyond this go in extra columns, over the chat
 
-const offset = 65 - gridconf.MARGIN_TOP;
+type Layout = { width: number; height: number; cols: number; rows: number };
 
-function* positions3x3plus1() {
-  for (let c = 0; c < 3; c++) for (let r = 0; r < 2; r++) yield gridPlace(c, r);
+/**
+ * Biggest panels (up to the configured size) that fit the base cams between the chat and the right edge.
+ * On ties, prefers fewer empty cells, then a square-ish grid, then more columns.
+ */
+export function computeLayout(): Layout {
+  const chatRight = document.getElementById('tabsAndFooter')?.getBoundingClientRect().right ?? 0;
+  const areaWidth = innerWidth - chatRight - gridconf.MARGIN_RIGHT;
+  const areaHeight = innerHeight - gridconf.MARGIN_TOP;
+  const cams = clamp(1, +chatHTML5.roles.user.webcamMax || 1, BASE_CAMS);
 
-  for (let c = 0; c < 3; c++) yield gridPlace(c, 2);
+  const candidates = Array.from({ length: cams }, (_, i): Layout => {
+    const cols = i + 1;
+    const rows = Math.ceil(cams / cols);
+    const fitWidth = (areaWidth - (cols - 1) * gridconf.GAP_X) / cols;
+    const fitHeight = (areaHeight - (rows - 1) * gridconf.GAP_Y) / rows;
+    const width = Math.floor(Math.max(MIN_WIDTH, Math.min(gridconf.WIDTH, fitWidth, fitHeight / panelRatio)));
+    return { width, height: width * panelRatio, cols, rows };
+  });
 
-  let c = 3;
-  do {
-    for (let r = 0; r < 3; r++) yield gridPlace(c, r, offset);
-  } while (c++);
+  candidates.sort(
+    (a, b) =>
+      b.width - a.width || a.cols * a.rows - b.cols * b.rows || Math.abs(a.cols - a.rows) - Math.abs(b.cols - b.rows) || b.cols - a.cols
+  );
+  return candidates[0]!;
 }
 
-export function organizePanels(getPositions = positions3x3plus1()) {
+const overflowOffset = 65 - gridconf.MARGIN_TOP; // Keeps the chat tabs visible
+
+/** Fills the grid in bands of 2 rows, column by column; then extra columns to the left, over the chat */
+function* gridPositions({ width, height, cols, rows }: Layout) {
+  const place = (c: number, r: number, offset = 0) => ({
+    ...base,
+    offsetX: -(gridconf.MARGIN_RIGHT + c * (width + gridconf.GAP_X)),
+    offsetY: gridconf.MARGIN_TOP + r * (height + gridconf.GAP_Y) + offset,
+  });
+
+  for (let band = 0; band < rows; band += 2) {
+    for (let c = 0; c < cols; c++) for (let r = band; r < Math.min(band + 2, rows); r++) yield place(c, r);
+  }
+
+  for (let c = cols; ; c++) for (let r = 0; r < rows; r++) yield place(c, r, overflowOffset);
+}
+
+export function organizePanels() {
+  // The chat's default width follows the configured panel size (see #tabsAndFooter in static.css)
+  const camsWidth = BASE_COLS * (gridconf.WIDTH + gridconf.GAP_X) - gridconf.GAP_X + gridconf.MARGIN_RIGHT;
+  document.documentElement.style.setProperty('--bbw-cams-width', `${camsWidth}px`);
+
   const opened = queryPanels();
   if (!opened.length) return;
 
+  const layout = computeLayout();
+  const baseCells = layout.cols * layout.rows;
   let lastIndex = 0;
 
   // Split the opened panels in two groups
@@ -64,9 +104,9 @@ export function organizePanels(getPositions = positions3x3plus1()) {
     }
   }
 
-  // Move the 10th+ users to a better position, if possible
+  // Move the users over the chat to a better position, if possible
   // Go on reverse to reduce the movement
-  for (let i = grid.length - 1; i >= 9; i--) {
+  for (let i = grid.length - 1; i >= baseCells; i--) {
     if (!grid[i]) continue;
 
     const nextAvailableSlot = grid.indexOf(null);
@@ -90,11 +130,12 @@ export function organizePanels(getPositions = positions3x3plus1()) {
   }
 
   // Apply the position to all the panels
+  const positions = gridPositions(layout);
   for (const place of grid) {
-    const position = getPositions.next().value;
+    const position = positions.next().value;
     if (!place || !position) continue;
 
     const panel = jsPanel.activePanels.getPanel(place.id);
-    if (panel) panel.resize({ width: gridconf.WIDTH, height: gridconf.HEIGHT }).reposition(position);
+    if (panel) panel.resize({ width: layout.width, height: layout.height }).reposition(position);
   }
 }

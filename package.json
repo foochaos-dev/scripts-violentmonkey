@@ -5,12 +5,9 @@
   "license": "GPL-3.0-or-later",
   "author": "Thicker Bro <justnet@hotmail.com.br>",
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "build:tsc": "tsc ./src",
     "prebuild:rsbuild": "tsc --noEmit",
     "build:rsbuild": "rsbuild build",
-    "ts-node-run": "node --loader ts-node/esm",
     "dev": "rsbuild dev",
     "build": "npm run build:rsbuild",
     "preview": "rsbuild preview",
@@ -27,7 +24,6 @@
     "postcss-loader": "^8.2.0",
     "prettier": "3.7.3",
     "style-loader": "^4.0.0",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {

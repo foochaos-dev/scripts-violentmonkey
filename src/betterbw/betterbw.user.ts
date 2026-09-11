@@ -7,6 +7,8 @@ import { setupTools } from './setupTools';
 import { observePanels } from './features/observeOpenPanels';
 import { observeChatNav } from './features/observeChat';
 import { debounce } from './utils/debounce';
+import { sweepExpiredCooldowns } from './features/cooldown';
+import { setupResponsiveLayout } from './features/responsiveLayout';
 
 export async function topLevelStyles() {
   GM.addStyle(topLevelCss);
@@ -22,6 +24,8 @@ function hacks() {
 export async function main() {
   hacks();
   GM.addStyle(staticCss);
+  sweepExpiredCooldowns();
+  setupResponsiveLayout();
   observeChatNav();
   observePanels();
 

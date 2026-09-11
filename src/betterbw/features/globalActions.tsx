@@ -102,7 +102,7 @@ const PanelSizeInput = () => {
   return (
     <MemoInput
       storageKey="config.webcamWidth"
-      title="Size of the panel"
+      title={"Size of the panel\nShrinks automatically when the cams don't fit the screen"}
       type="number"
       className="numberOfCams"
       suffix="px"

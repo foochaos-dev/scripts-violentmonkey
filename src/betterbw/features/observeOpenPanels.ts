@@ -1,6 +1,6 @@
 import { updateCssForOpenedPanels } from '../dynamicOpenedStyle';
 import { PANEL_SELECTOR } from '../utils/openPanel';
-import { attachPanelActions, cleanupPanel } from './panelActions';
+import { attachPanelActions } from './panelActions';
 import { organizePanels } from '../utils/organizePanels';
 import { tabFocused, whenTabFocused } from './tabFocus';
 import { observeIt } from '../utils/observeIt';
@@ -16,7 +16,6 @@ export function observePanels() {
     target: document.body,
     selector: PANEL_SELECTOR,
     forEachAddedNode: attachPanelActions,
-    forEachRemovedNode: cleanupPanel,
     cleanup: ({ nodesAdded, nodesRemoved }) => {
       if (!nodesAdded && !nodesRemoved) return;
 

@@ -1,10 +1,7 @@
 import { defineConfig, rspack } from '@rsbuild/core';
 import { getManifest } from './manifest';
-import { PrettierPlugin } from './rsbuild.PrettierPlugin';
 import { RuleJSTS, RuleSCSS } from './rsbuild.PrettierLoader';
 import { StripBlankLinesPlugin } from './rsbuild.StripBlankLinesPlugin';
-
-const isDev = process.env.NODE_ENV !== 'development';
 
 export default defineConfig({
   mode: 'production', // concatenate modules even on `rsbuild watch`
@@ -22,7 +19,6 @@ export default defineConfig({
       externalsType: 'umd',
 
       plugins: [
-        // PrettierPlugin(),
         StripBlankLinesPlugin(),
         new rspack.BannerPlugin({
           banner: getManifest(),
@@ -79,8 +75,7 @@ export default defineConfig({
             collapse_vars: true,
             unused: true,
             dead_code: true,
-            drop_console: !isDev,
-            drop_debugger: !isDev,
+            drop_console: false, // true strips every console.* call, errors included
             booleans: false,
             booleans_as_integers: false,
             conditionals: false,
@@ -124,7 +119,7 @@ export default defineConfig({
     legalComments: 'inline',
     sourceMap: false,
     filename: {
-      js: isDev ? '[name].user.js' : '[name].[contenthash:8].user.js',
+      js: '[name].user.js', // stable name, so the installed userscript can track the file
     },
     externals: {
       jspanel4: 'jsPanel',

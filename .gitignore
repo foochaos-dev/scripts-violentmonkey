@@ -1,3 +1,6 @@
 /build
 /node_modules
-/dist
+# Ignore the contents, not the folder itself: git can't re-include files inside an ignored folder
+/dist/**
+!/dist/**/
+!/dist/**/*.user.js

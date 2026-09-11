@@ -8,13 +8,16 @@ import { getUserById } from './utils/scrappers';
 import { AlgoControls } from './features/globalActions';
 import { spyOnConfig } from './features/spyOnConfig';
 import type { ChatHTML5Type } from './types/ChatHTML5';
+import { trackWatchStats } from './features/watchStats';
+import { WatchStats } from './features/watchStatsDisplay';
+import watchStatsCss from './styles/watchStats.css?inline';
 
 async function setupHeader() {
   const header = $('#header .header-custom-btns')[0];
   if (!header) return;
 
   const controls = document.createElement('div');
-  controls.id = 'bbw_controls';
+  controls.id = 'bbw_header_controls';
   header.prepend(controls);
 
   render(<AlgoControls />, controls);
@@ -25,7 +28,7 @@ async function setupUserMenu() {
   if (!userMenu) return;
 
   const controls = document.createElement('div');
-  controls.id = 'bbw_controls';
+  controls.id = 'bbw_menu_controls';
   userMenu.appendChild(controls);
   render(<MenuActions />, controls);
 
@@ -78,6 +81,19 @@ async function setupSidebar() {
   });
 }
 
+async function setupWatchStats() {
+  const counter = document.getElementById('watchAtMe');
+  if (!counter) return;
+
+  GM.addStyle(watchStatsCss);
+  const stats = document.createElement('span');
+  stats.id = 'bbw_watch_stats';
+  counter.after(stats);
+  render(<WatchStats />, stats);
+
+  await trackWatchStats();
+}
+
 export const ConfigWatchers: Watchers<ChatHTML5Type['config']> = {};
 
 function getPanelToClose(webcamNumber: number) {
@@ -105,7 +121,7 @@ export async function setupTools() {
   // @ts-expect-error -- fix unreacheable code warning
   chatHTML5.amIMuted = () => chatHTML5.myUser.mutedUntil > Date.now();
 
-  await Promise.all([setupHeader(), setupUserMenu(), setupSidebar()]);
+  await Promise.all([setupHeader(), setupUserMenu(), setupSidebar(), setupWatchStats()]);
 
   $('#sortWebcamtBtn').trigger('click');
 

@@ -5,6 +5,8 @@ export type ChatHTML5Type = {
     id: string;
     selectedUserid: string;
     mutedUsers?: string;
+    /** Whether I'm transmitting my cam */
+    webcam?: boolean;
   };
   config: {
     timeBeforeWatchingCamAgain: StringNumber;

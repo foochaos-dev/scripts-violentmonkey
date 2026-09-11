@@ -40,6 +40,19 @@ input.numberOfCams {
   margin-left: 0;
 }
 
+.jsPanel-hdr {
+  container-type: inline-size;
+}
+
+/* Small panels (auto-shrunk on small screens): tighter buttons, so they don't cover the whole title */
+@container (max-width: 240px) {
+  .panel-action-btn {
+    margin-left: 2px;
+    padding-inline: 2px;
+    font-size: 11px;
+  }
+}
+
 .jsPanel[data-grid-index][data-actions-attached]:not(.ui-draggable-dragging) {
   transition:
     top 0.15s linear,
@@ -364,6 +377,23 @@ input.numberOfCams {
 
 #roomsBtn {
   line-height: 1 !important;
+  padding-left: 6px !important;
+  padding-right: 3px !important;
+  margin-right: 0px !important;
+}
+
+.header-btn-wrap {
+  margin: 0 3px;
+  padding-right: 0px;
+}
+
+.header-custom-btns span {
+  padding-right: 10px;
+}
+
+#header {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
 }
 
 #header {
@@ -372,14 +402,16 @@ input.numberOfCams {
 
 #tabsAndFooter,
 #footer {
-  /* width: min(50%, 800px); */
-  /* width: min(50%, 642px); */
-  width: min(50%, calc(100% - 1107px));
+  /* Leaves room for 3 columns of cams of the configured size (--bbw-cams-width is set by organizePanels) */
+  width: max(280px, min(50%, calc(100% - var(--bbw-cams-width, 1107px))));
 }
 
 #tabsAndFooter {
   resize: horizontal;
   overflow: hidden;
+  /* Also limits a saved width on a smaller screen */
+  min-width: 200px;
+  max-width: 80%;
 }
 
 #footer {

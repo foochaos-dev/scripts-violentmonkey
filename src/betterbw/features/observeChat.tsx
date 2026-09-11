@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import { observeIt } from '../utils/observeIt';
 import { getUserById } from '../utils/scrappers';
 import { sessionCooldown } from './cooldown';
@@ -144,17 +143,17 @@ function observeChat(room: HTMLElement) {
     target: room,
     selector: '.message,.serverMessage',
     forEachAddedNode: handleChatMessage,
-    forEachRemovedNode: (message) => {
-      console.log('Chat message removed in', room.id, message);
-    },
   });
 }
 
 export function observeChatNav() {
+  const tabContent = $('#tabs .tab-content')[0];
+  if (!tabContent) return console.warn('Chat tabs not found; chat enhancements are disabled');
+
   const tabs: Record<string, { teardown?: () => void }> = {};
 
   return observeIt({
-    target: $('#tabs .tab-content')[0]!,
+    target: tabContent,
     selector: '.tab-pane',
     forEachAddedNode: (room) => {
       tabs[room.id] = observeChat(room);

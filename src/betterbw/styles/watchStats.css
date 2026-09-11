@@ -1,0 +1,67 @@
+.bbw-watch-stats {
+  margin-left: 4px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.bbw-watch-summary {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.bbw-watch-card {
+  position: fixed;
+  z-index: 100000;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(20, 20, 20, 0.95);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color: #eee;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 1px 0;
+    border: none;
+    font-weight: normal;
+  }
+
+  tbody th {
+    opacity: 0.8;
+  }
+
+  thead th,
+  td {
+    padding-left: 10px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead th {
+    font-weight: 600;
+  }
+
+  .bbw-separator > * {
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  p {
+    margin: 6px 0 0;
+  }
+
+  .bbw-muted {
+    opacity: 0.6;
+    font-size: 11px;
+  }
+}

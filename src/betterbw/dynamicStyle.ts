@@ -5,14 +5,14 @@ import { enqueueAsync } from './utils/debounce';
 const dataUserItems = (group: string[]) => group.map(dataUsername).join(',');
 
 async function getCSS() {
-  const keys = (await GM.listValues()).filter((key) => key.match(/\.*?_status/));
+  const keys = (await GM.listValues()).filter((key) => key.endsWith('_status'));
   const valuesEntries = await Promise.all(keys.map(async (key) => [key, await GM.getValue<string>(key)] as const));
 
   // Group users
-  const groups = { '--': [], '-': [], '+': [], '++': [] };
+  const groups = { '--': [] as string[], '-': [] as string[], '+': [] as string[], '++': [] as string[] };
   for (const [key, value] of valuesEntries) {
-    const id = key.split('_')[0];
-    groups[value].push(id);
+    const id = key.split('_')[0]!;
+    groups[value as keyof typeof groups]?.push(id); // Ignore unknown statuses instead of crashing
   }
 
   // Generate css selectors

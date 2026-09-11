@@ -12,19 +12,21 @@ export function enqueueAsync(func: Function) {
   let isRunning = false;
   let runAgain = false;
 
-  return async (...args) => {
+  return async () => {
     if (isRunning) {
       runAgain = true;
       return;
     }
 
     isRunning = true;
-    await func();
-    isRunning = false;
-
-    if (runAgain) {
-      runAgain = false;
-      await func();
+    try {
+      do {
+        runAgain = false;
+        await func();
+      } while (runAgain);
+    } finally {
+      // Otherwise a single failure would block every future run
+      isRunning = false;
     }
   };
 }
