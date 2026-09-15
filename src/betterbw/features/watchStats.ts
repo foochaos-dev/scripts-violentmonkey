@@ -1,6 +1,7 @@
+import type { StringNumber } from '../types/utils';
 import { isDefined } from '../utils/filters';
 import { queryPanels } from '../utils/openPanel';
-import { getUsername } from '../utils/scrappers';
+import { getUserId } from '../utils/scrappers';
 
 const STORAGE_KEY = 'stats.watchingMe';
 const TICK_MS = 2000;
@@ -20,7 +21,9 @@ type Totals = {
   watcherMs: number;
 };
 
-type Unsaved = Totals & { sessions: number; regulars: Record<string, number> };
+type Counts = Record<string, number>;
+
+type Unsaved = Totals & { sessions: number; regulars: Counts; watchTime: Counts };
 
 export type SessionStats = Totals & { peaks: Peaks; watchers: Set<string> };
 
@@ -29,7 +32,9 @@ export type EverStats = Totals & {
   /** Sessions (page loads) in which someone watched */
   sessions: number;
   /** Username → number of sessions they watched */
-  regulars: Record<string, number>;
+  regulars: Counts;
+  /** Username → for how long they watched (ms) */
+  watchTime: Counts;
   /** When the tracking started */
   since: number;
 };
@@ -37,7 +42,7 @@ export type EverStats = Totals & {
 const PEAK_KEYS: PeakKey[] = ['watchers', 'onCam', 'mutual', 'roomShare', 'camsShare'];
 
 const emptyPeaks = () => Object.fromEntries(PEAK_KEYS.map((key) => [key, { value: 0, at: 0 }])) as Peaks;
-const emptyUnsaved = (): Unsaved => ({ watchedMs: 0, watcherMs: 0, sessions: 0, regulars: {} });
+const emptyUnsaved = (): Unsaved => ({ watchedMs: 0, watcherMs: 0, sessions: 0, regulars: {}, watchTime: {} });
 const emptyEver = (): EverStats => ({ ...emptyUnsaved(), peaks: emptyPeaks(), since: Date.now() });
 
 let now: Snapshot = { watchers: 0, onCam: 0, mutual: 0, roomShare: 0, camsShare: 0, names: [] };
@@ -74,17 +79,20 @@ function isMainTabActive() {
 const numberIn = (selector: string) => Number(document.querySelector(selector)?.textContent?.trim()) || 0;
 
 function takeSnapshot(): Snapshot {
-  const notMe = `:not([data-id="${chatHTML5.myUser.id}"])`;
-  const watcherItems = Array.from(document.querySelectorAll<HTMLElement>(`#userList .userItem${notMe}:has(.eye-icon .isWatching)`));
-  const names = [...new Set(watcherItems.map((item) => item.dataset.username?.split('_')[0]).filter(isDefined))];
+  const me = String(chatHTML5.myUser.id);
+  const userById = (id: string) => chatHTML5.users[id as StringNumber] ?? chatHTML5.watchingAtMe[id];
 
-  const watchers = Math.max(numberIn('#watchAtMe'), names.length);
-  const onCam = watcherItems.filter((item) => item.dataset.webcam === 'true').length;
-  const watching = new Set(Array.from(queryPanels(), getUsername));
-  const mutual = names.filter((name) => watching.has(name)).length;
+  // The chat's own list of watchers: the sidebar may be filtered, or showing a private chat
+  const watcherIds = Object.keys(chatHTML5.watchingAtMe).filter((id) => id !== me);
+  const watchers = watcherIds.length;
+  const names = [...new Set(watcherIds.map((id) => userById(id)?.username?.split('_')[0]).filter(isDefined))];
+
+  const onCam = watcherIds.filter((id) => userById(id)?.webcam).length;
+  const watching = new Set(Array.from(queryPanels(), getUserId));
+  const mutual = watcherIds.filter((id) => watching.has(id)).length;
 
   const othersOnline = (numberIn('#onlineCounter') || document.querySelectorAll('#userList .userItem').length) - 1;
-  const othersOnCam = document.querySelectorAll(`#userList .userItem${notMe}[data-webcam="true"]`).length;
+  const othersOnCam = Object.values(chatHTML5.users).filter((user) => user.webcam && String(user.id) !== me).length;
 
   return {
     watchers,
@@ -131,6 +139,9 @@ function tick() {
       totals.watchedMs += at - lastTickAt;
       totals.watcherMs += now.watchers * (at - lastTickAt);
     }
+    for (const name of now.names) {
+      for (const watchTime of [ever.watchTime, unsaved.watchTime]) watchTime[name] = (watchTime[name] ?? 0) + (at - lastTickAt);
+    }
     dirty = true;
   }
   lastTickAt = at;
@@ -149,10 +160,13 @@ async function load(): Promise<EverStats> {
   return { ...empty, ...stored, peaks: { ...empty.peaks, ...stored?.peaks } };
 }
 
-function merge(base: EverStats, pending: Unsaved, peaks: Peaks): EverStats {
-  const regulars = { ...base.regulars };
-  for (const [name, count] of Object.entries(pending.regulars)) regulars[name] = (regulars[name] ?? 0) + count;
+function addCounts(base: Counts, pending: Counts) {
+  const sum = { ...base };
+  for (const [name, count] of Object.entries(pending)) sum[name] = (sum[name] ?? 0) + count;
+  return sum;
+}
 
+function merge(base: EverStats, pending: Unsaved, peaks: Peaks): EverStats {
   return {
     since: base.since,
     peaks: Object.fromEntries(
@@ -161,7 +175,8 @@ function merge(base: EverStats, pending: Unsaved, peaks: Peaks): EverStats {
     watchedMs: base.watchedMs + pending.watchedMs,
     watcherMs: base.watcherMs + pending.watcherMs,
     sessions: base.sessions + pending.sessions,
-    regulars,
+    regulars: addCounts(base.regulars, pending.regulars),
+    watchTime: addCounts(base.watchTime, pending.watchTime),
   };
 }
 
@@ -183,9 +198,8 @@ export async function trackWatchStats() {
   tick();
   setInterval(tick, TICK_MS);
 
-  // React right away to the counter changing, instead of waiting for the next tick
-  const counter = document.getElementById('watchAtMe');
-  if (counter) new MutationObserver(tick).observe(counter, { childList: true, characterData: true, subtree: true });
+  // React right away when someone starts or stops watching, instead of waiting for the next tick
+  chatHTML5.socket.on('watched', () => tick());
 
   window.addEventListener('pagehide', () => {
     if (dirty) save();

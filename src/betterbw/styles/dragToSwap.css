@@ -1,0 +1,10 @@
+/* See dragToSwap.ts: over the cam behind the dragged one and the dragged cam's empty spot, until they swap */
+.bbw-swap-highlight {
+  position: fixed;
+  z-index: 100000;
+  box-sizing: border-box;
+  border: 2px solid rgba(40, 140, 255, 0.9);
+  border-radius: 4px;
+  background: rgba(40, 140, 255, 0.35);
+  pointer-events: none;
+}

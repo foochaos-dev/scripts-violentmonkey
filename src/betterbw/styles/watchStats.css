@@ -1,5 +1,23 @@
+/* On its own line, below the "Watching me" counter */
+#bbw_watch_stats {
+  display: block;
+  flex-basis: 100%; /* In case the container is a flexbox */
+}
+
+.users-info {
+  padding-block: 0 !important;
+}
+
+.watchingMeContainer:has(#bbw_watch_stats) {
+  flex-wrap: wrap;
+  line-height: 1;
+
+  label[for="whoWatchesMeCheckbox"] {
+    margin-bottom: 0;
+  }
+}
+
 .bbw-watch-stats {
-  margin-left: 4px;
   white-space: nowrap;
   cursor: help;
 }
@@ -7,6 +25,10 @@
 .bbw-watch-summary {
   font-size: 0.85em;
   opacity: 0.7;
+}
+
+#tabs .bbw-watch-notice {
+  color: goldenrod;
 }
 
 .bbw-watch-card {

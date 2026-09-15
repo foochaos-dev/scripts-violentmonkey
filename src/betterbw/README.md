@@ -54,14 +54,16 @@ A cam that doesn't load within 25 seconds is closed, and that buddy is hidden fo
 
 ### Cam gestures
 
-- **Scroll** over a cam to change its volume
+- **Hover** a cam to see its controls: play/pause, mute, volume, full screen and zoom. They hide again after 2 seconds without moving the mouse
+- **Scroll** over the controls to change the volume
     - Fingers (or the mouse wheel) up: louder
     - Fine steps near 0%, a bit bigger near 100%
     - The volume is remembered for each buddy; muting lasts until you reload the page
-- **Pinch** (or `Ctrl` + scroll) over a cam to zoom into it, instead of zooming the whole page
-    - **Drag** to look around while zoomed
-    - **Double-click** to zoom out
-- **Clicking** a cam doesn't pause it anymore; use the play button on its controls bar
+- **Pinch** over a cam (or use the `+`/`−` buttons above its full screen button) to zoom into it, instead of zooming the whole page
+    - **Drag** or **scroll** to look around while zoomed, like on a zoomed-in webpage
+    - `1×` zooms back out
+- **Double-click** a cam to go full screen
+- **Clicking** a cam doesn't pause it; use the play button on its controls
 
 ### Sidebar
 
@@ -71,7 +73,7 @@ A cam that doesn't load within 25 seconds is closed, and that buddy is hidden fo
 - Fade down "busy" users (when they're on a call with other buddy)
 - Improve indication of private cams (puts a red border around the user)
 - Shows the country flags
-- When you're already at your max # of cams, clicking a camera icon swaps one of the open cams for it (a `--` one first, otherwise the last one)
+- When you're already at your max # of cams, clicking a camera icon swaps one of the open cams for it (a `--` one that isn't watching you first, otherwise the last one)
 - Clicks on the eye icon are ignored, so you don't click it by accident (hold shift to click it)
 
 #### Watching me
@@ -86,9 +88,10 @@ Hover it for more stats, now, this session and ever:
 - How many of your watchers have their cam on, and how many of them you're watching back
 - Which share of the room, and of the cams, is watching you
 - Unique watchers, how long you've been watched, and your average audience
-- Your record's date, and your regulars (the buddies that watched you in more sessions)
+- Your record's date, and your regulars (who watched you the longest, and in how many sessions)
 
 The stats are only counted while the main "Bateworld" chat tab is open.
+You can also get a notice in the chat when someone starts watching you (see [Settings](#settings)).
 
 ### Chat
 
@@ -97,6 +100,17 @@ The stats are only counted while the main "Bateworld" chat tab is open.
 - "Has opened his webcam" messages show a red 🔒 for private cams
 - Whispers and cam invitations get the same treatment
 - If a public cam kicks you out (the chat says "You requested webcam of..."), that buddy is skipped by the automations for 30 min
+
+### Settings
+
+Click `⚙` on the top bar:
+
+- **Tell me when someone starts watching me**: off, only buddies you liked (`+`, `++`), or everyone (except `--`). The notice shows up in the chat
+- **Cams move away**: rest the pointer on a free bit of the chat's tabs, or of the buddy list, and the cams in front of it slide out of the way until the pointer leaves. Cams under the pointer stay where they are, so you never lose their controls as you aim at them
+- Some of the chat's own options, that it doesn't let you change:
+    - Sidebar: for how long buddies are online, their ages, and how many people watch each cam
+    - Chat: group messages in a row from the same buddy, enter/leave/kick notices (and after how long they disappear)
+    - Cams: start them muted, and open the most popular one when entering a room
 
 ### Shift+click
 

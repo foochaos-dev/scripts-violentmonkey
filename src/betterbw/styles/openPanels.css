@@ -21,8 +21,8 @@
   }
 }
 
-.watchingMe,
-.user_watching_me {
+/* Set by markPanelsWatchingMe */
+.jsPanel.watchingMe {
   --gridGap: 4px;
   box-shadow: #FFD700 0px 0px 1px var(--gridGap) !important;
 

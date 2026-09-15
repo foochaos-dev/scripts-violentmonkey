@@ -14,11 +14,6 @@ input.numberOfCams {
   width: 4em;
 }
 
-.panel-action {
-  position: absolute;
-  left: 3px;
-}
-
 .panel-action-btn {
   cursor: pointer;
   margin-left: 8px;
@@ -40,29 +35,75 @@ input.numberOfCams {
   margin-left: 0;
 }
 
+/*
+ * Two separate groups on the cam panel's header, each with the same transparent-ish, rounded "button group"
+ * look as the video's zoom controls (videoControls.css). Rotate lives with those zoom controls instead
+ * (videoControls.ts/.css), since it needs to align with them:
+ * - .panel-action: ratings, top left (unchanged position)
+ * - .panel-cooldown: top right, aligned with .panel-action (same top) and the zoom controls (same right)
+ */
+.panel-action,
+.panel-cooldown {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+
+  .panel-action-btn {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    color: #fff;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 0 6px;
+    text-align: center;
+    opacity: 0.85;
+    transition: opacity 0.2s ease-out;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.panel-action {
+  left: 4px;
+  top: 24px;
+}
+
+.panel-cooldown {
+  right: 2px;
+  top: 24px;
+}
+
 .jsPanel-hdr {
   container-type: inline-size;
 }
 
 /* Small panels (auto-shrunk on small screens): tighter buttons, so they don't cover the whole title */
 @container (max-width: 240px) {
-  .panel-action-btn {
-    margin-left: 2px;
-    padding-inline: 2px;
+  :is(.panel-action, .panel-cooldown) .panel-action-btn {
+    padding: 0 3px;
     font-size: 11px;
   }
 }
 
-.jsPanel[data-grid-index][data-actions-attached]:not(.ui-draggable-dragging) {
+.jsPanel[data-grid-index][data-actions-attached]:not(.ui-draggable-dragging, .bbw-dragging) {
   transition:
     top 0.15s linear,
     right 0.15s linear,
     bottom 0.15s linear,
-    left 0.15s linear;
+    left 0.15s linear,
+    translate 0.15s linear;
 }
 
-.jsPanel:not(:hover) .panel-action-btn {
-  opacity: 0;
+.jsPanel:hover :is(.panel-action, .panel-cooldown) {
+  opacity: 1;
 }
 
 .jsPanel .speaks {
@@ -263,11 +304,19 @@ input.numberOfCams {
     top: 50px;
     left: 31px;
     z-index: 101;
-    height: 37px;
+    height: 50px;
+  }
+
+  > ul.nav.nav-pills > li > a {
+    padding: 0.2rem;
+    height: auto !important;
   }
 }
 
 #myWebcamContainer {
+  > .btn-group {
+    padding-block: 0;
+  }
   .btn {
     text-wrap: inherit;
     line-height: 1 !important;
@@ -391,13 +440,45 @@ input.numberOfCams {
   padding-right: 10px;
 }
 
-#header {
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+/* Frees up space next to the avatar for #bbw_header_controls, a sibling placed right after it */
+#myAvatar {
+  padding-inline: 0;
+  .myUsername {
+  display: none;
+}}
+
+#bbw_header_controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+  white-space: nowrap;
+
+  button,
+  input {
+    margin: 0;
+    padding-inline: 0.5rem;
+    line-height: 1.275;
+  }
+
+  input[type=number] {
+    padding-inline: 0;
+  }
+
+  label {
+    margin: 0;
+  }
 }
 
 #header {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
   height: 30px !important;
+
+  .status {
+    top: -8px;
+    left: -6px;
+  }
 }
 
 #tabsAndFooter,

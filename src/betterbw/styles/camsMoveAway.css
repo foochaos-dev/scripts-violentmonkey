@@ -1,0 +1,13 @@
+/*
+ * See camsMoveAway.ts: the cams in front of what the pointer went for get a temporary offset, which only moves
+ * them on screen; their real spot on the grid (the panel's own top/left) is left alone.
+ * The offset is animated along with those, on .jsPanel's transition in static.css.
+ */
+.jsPanel {
+  translate: var(--bbw-peek-x, 0px) var(--bbw-peek-y, 0px);
+}
+
+/* A cam being dragged follows the pointer, with no offset of its own */
+.jsPanel:is(.ui-draggable-dragging, .bbw-dragging) {
+  translate: none;
+}

@@ -23,7 +23,22 @@ export type ChatHTML5Type = {
     };
   };
   users: Record<StringNumber, User>;
+  /** Users watching my cam, by id */
+  watchingAtMe: Record<string, User>;
+  socket: {
+    emit: (this: unknown, event: string, ...args: unknown[]) => unknown;
+    on: (event: string, listener: (...args: any[]) => void) => unknown;
+  };
 
+  getCurrentTab: () => { id?: StringNumber; roomid?: StringNumber; room?: boolean; label?: string };
+  searchUsers: () => void;
+  /** Stops watching a cam: stops its stream, tells the server, and removes its panel (if still there) */
+  removeWebcam: (id: StringNumber | string, reason?: string) => void;
+  sortWatchersNumber: () => void;
+  getDateAgo: (date: number | string | undefined) => string;
+  displayDateAgo: () => void;
+  removeServerMessages: () => void;
+  serverMessageCurrentTab: (html: string, className: string) => void;
   maxWebcamreached: () => boolean;
   maxWebcamreached_original: () => boolean;
   getWebcamNumber: () => number;

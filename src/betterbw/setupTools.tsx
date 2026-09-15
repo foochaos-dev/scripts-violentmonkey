@@ -5,22 +5,38 @@ import { spyOn, type Watchers } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
 import { setNextCam } from './features/observeOpenPanels';
 import { getUserById } from './utils/scrappers';
-import { AlgoControls } from './features/globalActions';
+import { NumberOfCams, PlayPauseButton, ResetLayoutButton } from './features/globalActions';
+import { HeaderControlsDiscovery } from './features/discovery';
 import { spyOnConfig } from './features/spyOnConfig';
 import type { ChatHTML5Type } from './types/ChatHTML5';
 import { trackWatchStats } from './features/watchStats';
+import { skipRedundantUserListRefresh } from './features/fastUserList';
 import { WatchStats } from './features/watchStatsDisplay';
+import { setupWatchingMe } from './features/watchingMe';
+import { SettingsMenu } from './features/settingsMenu';
+import { applySiteOptions } from './features/settings';
 import watchStatsCss from './styles/watchStats.css?inline';
+import settingsCss from './styles/settings.css?inline';
 
 async function setupHeader() {
-  const header = $('#header .header-custom-btns')[0];
-  if (!header) return;
+  const avatar = document.getElementById('myAvatar');
+  if (!avatar) return;
 
   const controls = document.createElement('div');
   controls.id = 'bbw_header_controls';
-  header.prepend(controls);
+  avatar.after(controls);
 
-  render(<AlgoControls />, controls);
+  GM.addStyle(settingsCss);
+  render(
+    <>
+      <SettingsMenu />
+      <ResetLayoutButton />
+      <NumberOfCams />
+      <PlayPauseButton />
+      <HeaderControlsDiscovery />
+    </>,
+    controls
+  );
 }
 
 async function setupUserMenu() {
@@ -49,7 +65,9 @@ async function setupSidebar() {
   if (!userList) return;
 
   $(userList).on('click', '.webcamBtn', function (event) {
-    if (event.shiftKey) return;
+    // Only the user's own clicks: the script's simulated ones (auto-opening, retries, the swap's re-click)
+    // would otherwise close a cam whenever the chat's count is momentarily at the limit
+    if (event.shiftKey || !event.originalEvent?.isTrusted) return;
 
     const webcamNumber = chatHTML5.getWebcamNumber();
     const webcamMax = +chatHTML5.roles.user.webcamMax;
@@ -99,7 +117,7 @@ export const ConfigWatchers: Watchers<ChatHTML5Type['config']> = {};
 function getPanelToClose(webcamNumber: number) {
   if (webcamNumber <= 0) return null;
 
-  const optionA = $(`${PANEL_SELECTOR}:not(.user_watching_me)[data-status="--"]`)[0];
+  const optionA = $(`${PANEL_SELECTOR}:not(.watchingMe)[data-status="--"]`)[0];
   if (optionA) return optionA;
 
   for (let i = webcamNumber; i > 0; i--) {
@@ -116,6 +134,7 @@ export async function setupTools() {
   chatHTML5.config.checkOwnStream = '1';
   chatHTML5.config.showCountryFlag = '1';
   chatHTML5.roles.user.webcamMax = GM_getValue('user.webcamMax', 10);
+  applySiteOptions(); // Again, in case the chat reset its config while entering the room
   const { revoke } = spyOnConfig(ConfigWatchers);
 
   // @ts-expect-error -- fix unreacheable code warning
@@ -123,7 +142,11 @@ export async function setupTools() {
 
   await Promise.all([setupHeader(), setupUserMenu(), setupSidebar(), setupWatchStats()]);
 
-  $('#sortWebcamtBtn').trigger('click');
+  skipRedundantUserListRefresh();
+  setupWatchingMe();
+
+  // It's a toggle: don't turn it off when the site's config already turned it on
+  if (!$('#sortWebcamtBtn').hasClass('selected')) $('#sortWebcamtBtn').trigger('click');
 
   return revoke;
 }

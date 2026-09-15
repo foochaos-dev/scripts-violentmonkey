@@ -7,7 +7,9 @@ import type { JSPanel } from '../types/JSPanel';
 import { computeLayout } from '../utils/organizePanels';
 import { debounce } from '../utils/debounce';
 import { sessionAudioMuted } from './audioMuted';
+import { sessionZoom } from './sessionZoom';
 import { attachVideoGestures } from './videoGestures';
+import { getSetting } from './settings';
 
 type BtnProps = { username?: string; getUsername: () => string | undefined; panel?: HTMLDivElement | undefined };
 
@@ -66,17 +68,6 @@ const BtnPlus2 = (props: BtnProps) => {
   return <BtnClassify value="++" title={'Ohhh Yeah!\nI liked you a lot, buddy!'} {...props} />;
 };
 
-const BtnRotate = ({ panel, getUsername }: BtnProps) => {
-  const onClick = () => {
-    if (panel) rotateCam({ id: getUsername(), panel });
-  };
-  return (
-    <button title="Rotate" className="panel-action-btn" onClick={onClick}>
-      ⟳
-    </button>
-  );
-};
-
 const BtnCooldown = ({ panel, getUsername }: BtnProps) => {
   const onClick = (event) => {
     if (event?.shiftKey) cooldownIt({ username: getUsername(), panel, minutes: 120 });
@@ -93,16 +84,22 @@ const BtnCooldown = ({ panel, getUsername }: BtnProps) => {
   );
 };
 
+// Two separate groups: ratings (top left) and cooldown (top right, aligned with the ratings and with the
+// video's zoom controls) - see .panel-action/.panel-cooldown in static.css. Rotate lives in the video's own
+// controls bar instead (videoControls.ts), next to the zoom controls it needs to align with.
 export const PanelActions = ({ panel, username }: Pick<BtnProps, 'panel'> & { username: string }) => {
   const props = { panel, getUsername: () => username };
   return (
     <>
-      <BtnCooldown {...props} />
-      <BtnRotate {...props} />
-      <BtnPlus2 {...props} />
-      <BtnPlus1 {...props} />
-      <BtnMinus1 {...props} />
-      <BtnMinus2 {...props} />
+      <div class="panel-action">
+        <BtnMinus2 {...props} />
+        <BtnMinus1 {...props} />
+        <BtnPlus1 {...props} />
+        <BtnPlus2 {...props} />
+      </div>
+      <div class="panel-cooldown">
+        <BtnCooldown {...props} />
+      </div>
     </>
   );
 };
@@ -157,6 +154,7 @@ function monitorVideoReadiness(video: HTMLVideoElement, panel: HTMLDivElement, p
   };
 
   timeoutId = setTimeout(() => {
+    if (!panel.isConnected) return; // Closed some other way (e.g. the buddy left)
     cooldownIt({ username: getUsername(panel), minutes: 5 });
     panelJS.close();
   }, 25000);
@@ -182,11 +180,10 @@ export async function attachPanelActions(panel: HTMLDivElement) {
   panel.dataset.status = await GM.getValue(`${username}_status`);
 
   const actions = document.createElement('div');
-  actions.className = 'panel-action';
   header.appendChild(actions);
   render(<PanelActions username={username} panel={panel} />, actions);
 
-  panel.dataset.rotation = await GM.getValue(`${username}_rotation`);
+  panel.dataset.rotation = await GM.getValue(`${username}_rotation`, '0');
 
   $('.jsPanel-btn.jsPanel-btn-close', panel)
     .attr('title', 'Close\n\nShift + click: also reduce the # of cams')
@@ -196,6 +193,19 @@ export async function attachPanelActions(panel: HTMLDivElement) {
       }
 
       cooldownIt({ username: username, minutes: 1 });
+    });
+
+  $(header)
+    .attr('title', 'Middle click or Ctrl + click: close and reduce the # of cams')
+    .on('mousedown', (event) => {
+      if (event.button === 1) event.preventDefault(); // Stop the middle-click autoscroll cursor
+    })
+    .on('auxclick click', (event) => {
+      if (event.type === 'auxclick' ? event.button !== 1 : !event.ctrlKey) return;
+      event.preventDefault();
+
+      chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // getWebcamNumber() is already updated
+      cooldownIt({ username, minutes: 1, panel });
     });
 
   $('.userAvatar', panel).on('click', (event) => {
@@ -215,9 +225,14 @@ export async function attachPanelActions(panel: HTMLDivElement) {
   const video = panel.querySelector('video');
   if (video) {
     if (sessionAudioMuted.get(username)) video.muted = true;
-    video.volume = await GM.getValue(`${username}_volume`, 0.08);
+    video.volume = await GM.getValue(`${username}_volume`, getSetting('defaultVolume'));
 
-    attachVideoGestures(video);
+    const zoom = attachVideoGestures(video, () => rotateCam({ id: username, panel }), sessionZoom.get(username));
+    zoom.onChange(
+      debounce(() => {
+        sessionZoom.set(username, zoom.getState());
+      })
+    );
     persistVolumeChange(video, username);
     monitorVideoReadiness(video, panel, panelJS);
   }

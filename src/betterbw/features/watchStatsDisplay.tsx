@@ -34,8 +34,8 @@ function StatsCard({ anchor }: { anchor: DOMRect }) {
     top: `${below ? anchor.bottom + 6 : anchor.top - 6}px`,
     transform: below ? '' : 'translateY(-100%)',
   };
-  const regulars = Object.entries(ever.regulars)
-    .filter(([, sessions]) => sessions > 1)
+  const regulars = Object.entries(ever.watchTime)
+    .filter(([, ms]) => ms >= 60_000)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
 
@@ -90,7 +90,9 @@ function StatsCard({ anchor }: { anchor: DOMRect }) {
           Record: <b>{int(ever.peaks.watchers.value)}</b> watchers, on {date(ever.peaks.watchers.at)}
         </p>
       )}
-      {regulars.length > 0 && <p>Regulars: {regulars.map(([name, sessions]) => `${name} (${sessions})`).join(', ')}</p>}
+      {regulars.length > 0 && (
+        <p>Regulars: {regulars.map(([name, ms]) => `${name} (${duration(ms)}, ${int(ever.regulars[name] ?? 1)}×)`).join(', ')}</p>
+      )}
       <p class="bbw-muted">
         Watched in {int(ever.sessions)} sessions since {date(ever.since)}
       </p>
