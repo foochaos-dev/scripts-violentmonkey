@@ -15,8 +15,8 @@ import { WatchStats } from './features/watchStatsDisplay';
 import { setupWatchingMe } from './features/watchingMe';
 import { SettingsMenu } from './features/settingsMenu';
 import { applySiteOptions } from './features/settings';
-import watchStatsCss from './styles/watchStats.css?inline';
-import settingsCss from './styles/settings.css?inline';
+import watchStatsCss from './styles/watchStats.css?raw';
+import settingsCss from './styles/settings.css?raw';
 
 async function setupHeader() {
   const avatar = document.getElementById('myAvatar');

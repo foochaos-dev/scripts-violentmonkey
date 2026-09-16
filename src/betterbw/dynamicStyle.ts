@@ -1,5 +1,5 @@
 import { dataUsername } from './utils/formatters';
-import tiersCss from './styles/tiers.css?inline';
+import tiersCss from './styles/tiers.css?raw';
 import { enqueueAsync } from './utils/debounce';
 
 const dataUserItems = (group: string[]) => group.map(dataUsername).join(',');

@@ -1,7 +1,7 @@
 import { dataUsername } from './utils/formatters';
 import { queryPanels } from './utils/openPanel';
 import { getUsername } from './utils/scrappers';
-import openPanelsCss from './styles/openPanels.css?inline';
+import openPanelsCss from './styles/openPanels.css?raw';
 import { isDefined } from './utils/filters';
 
 const dynamicOpenedStyle = GM_addStyle('');

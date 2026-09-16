@@ -14,8 +14,8 @@ import { closeCamsUntil } from './features/noCamsBeforeRoom';
 import { setupDragToSwap } from './features/dragToSwap';
 import { setupCamsMoveAway } from './features/camsMoveAway';
 import { runAlgo } from './features/globalActions';
-import staticCss from './styles/static.css?inline';
-import topLevelCss from './styles/topLevel.css?inline';
+import staticCss from './styles/static.css?raw';
+import topLevelCss from './styles/topLevel.css?raw';
 
 export async function topLevelStyles() {
   GM.addStyle(topLevelCss);

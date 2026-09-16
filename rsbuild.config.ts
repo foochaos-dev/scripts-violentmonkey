@@ -58,10 +58,11 @@ export default defineConfig({
         externalHelpers: true,
         transform: {
           react: {
-            runtime: 'automatic',
-            importSource: 'preact',
-            // pragma: 'h',
-            // pragmaFrag: 'Fragment',
+            // classic runtime against the @require'd global: emits `preact.h(...)`
+            // instead of `(0, external_jsxRuntime_namespaceObject.jsx)(...)`
+            runtime: 'classic',
+            pragma: 'preact.h',
+            pragmaFrag: 'preact.Fragment',
           },
           optimizer: {
             simplify: true,
@@ -125,7 +126,6 @@ export default defineConfig({
       jspanel4: 'jsPanel',
       preact: 'window preact',
       'preact/hooks': 'window preactHooks',
-      'preact/jsx-runtime': 'window jsxRuntime',
       // preact: './external-preact.js',
       // preact: 'https://cdn.jsdelivr.net/npm/preact/+esm',
       // preact: '(await import("https://cdn.jsdelivr.net/npm/preact/+esm"))',

@@ -1,6 +1,6 @@
 import { PANEL_SELECTOR, queryPanels } from '../utils/openPanel';
 import { getSetting } from './settings';
-import camsMoveAwayCss from '../styles/camsMoveAway.css?inline';
+import camsMoveAwayCss from '../styles/camsMoveAway.css?raw';
 
 /** Breathing room between what the pointer went for and the cams that moved away from it */
 const GAP_PX = 4;

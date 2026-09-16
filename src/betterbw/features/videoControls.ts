@@ -1,4 +1,4 @@
-import videoControlsCss from '../styles/videoControls.css?inline';
+import videoControlsCss from '../styles/videoControls.css?raw';
 import { clamp } from '../utils/math';
 import { upwardPx } from '../utils/wheel';
 import { getSetting } from './settings';

@@ -8,10 +8,23 @@ const getParser = (path: string) => {
   return null;
 };
 
+// CSS is imported `?raw` and emitted as a template literal (real newlines stay readable in the bundle);
+// drop comments and blank lines, indent with tabs
+const cssToModule = (src: string) => {
+  const css = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/[ \t]+$/gm, '')
+    .replace(/^( {2})+/gm, m => '\t'.repeat(m.length / 2))
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+  return `export default \`\n${css.replace(/[\\`]|\$\{/g, m => '\\' + m)}\n\`;\n`;
+};
+
 export const PrettierLoader: Rspack.LoaderDefinition = async function (source) {
   const path = this.resourcePath;
 
   // Determine parser automatically (typescript/jsx/etc)
+  if (/\.css$/.test(path)) return cssToModule(source);
   const parser = getParser(path);
   if (!parser) return source; // skip non-code files
 
@@ -28,6 +41,7 @@ export const PrettierLoader: Rspack.LoaderDefinition = async function (source) {
     htmlWhitespaceSensitivity: 'ignore',
     experimentalOperatorPosition: 'start',
     trailingComma: 'all',
+    useTabs: true,
     tabWidth: 2,
     parser,
   });
@@ -52,6 +66,7 @@ export const RuleSCSS: Rspack.RuleSetRule = {
   include: /src/,
   exclude: /node_modules/,
   enforce: 'pre',
+  type: 'javascript/auto', // override rsbuild's `?raw` asset/source: the loader emits a JS module
   use: [
     {
       loader: './rsbuild.PrettierLoader.ts',

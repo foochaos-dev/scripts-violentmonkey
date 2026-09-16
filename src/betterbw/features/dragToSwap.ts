@@ -1,6 +1,6 @@
 import { PANEL_SELECTOR, queryPanels } from '../utils/openPanel';
 import { organizePanels, placeInSlot } from '../utils/organizePanels';
-import dragToSwapCss from '../styles/dragToSwap.css?inline';
+import dragToSwapCss from '../styles/dragToSwap.css?raw';
 
 const HOVER_TOLERANCE_PX = 20; // How close the dragged cam must get to another cam's spot
 const RELEASE_TOLERANCE_PX = 24; // How close to that spot it must be dropped to take it
