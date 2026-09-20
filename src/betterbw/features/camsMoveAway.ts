@@ -34,19 +34,26 @@ function sidebarZone(): DOMRect | null {
   return sidebar?.width ? sidebar : null;
 }
 
-/** The cams over the chat slide down, whole columns at a time, so they don't pile up on the rows below */
+/** On the cams that moved: lifts them over the ones they slid in front of (see camsMoveAway.css) */
+const PEEKING_CLASS = 'bbw-peeking';
+
+function startPanel(panel: HTMLDivElement, property: Peek['property'], shift: number) {
+  panel.style.setProperty(property, `${shift}px`);
+  panel.classList.add(PEEKING_CLASS);
+}
+
+/** Only the cams over the chat's tabs slide down; the rows below them stay where they are, and they slide on top */
 function startTabsPeek(zone: DOMRect): Peek | null {
-  const columns = panelRects().filter(([, rect]) => rect.left < zone.right && rect.right > zone.left);
-  const covering = columns.filter(([, rect]) => rect.top < zone.bottom);
+  const covering = panelRects().filter(([, rect]) => rect.left < zone.right && rect.right > zone.left && rect.top < zone.bottom);
   if (!covering.length) return null;
 
   const shift = Math.max(...covering.map(([, rect]) => zone.bottom - rect.top)) + GAP_PX;
-  for (const [panel] of columns) panel.style.setProperty('--bbw-peek-y', `${shift}px`);
+  for (const [panel] of covering) startPanel(panel, '--bbw-peek-y', shift);
 
-  const left = Math.min(zone.left, ...columns.map(([, rect]) => rect.left));
-  const right = Math.max(zone.right, ...columns.map(([, rect]) => rect.right));
+  const left = Math.min(zone.left, ...covering.map(([, rect]) => rect.left));
+  const right = Math.max(zone.right, ...covering.map(([, rect]) => rect.right));
   return {
-    panels: columns.map(([panel]) => panel),
+    panels: covering.map(([panel]) => panel),
     property: '--bbw-peek-y',
     hold: rectOf(left, zone.top, right, zone.bottom + shift),
   };
@@ -61,7 +68,7 @@ function startSidebarPeek(zone: DOMRect): Peek | null {
   const hugsRight = zone.left > innerWidth - zone.right;
   const needed = Math.max(...covering.map(([, rect]) => (hugsRight ? rect.right - zone.left : zone.right - rect.left)));
   const shift = (hugsRight ? -1 : 1) * (needed + GAP_PX);
-  for (const [panel] of covering) panel.style.setProperty('--bbw-peek-x', `${shift}px`);
+  for (const [panel] of covering) startPanel(panel, '--bbw-peek-x', shift);
 
   const top = Math.min(zone.top, ...covering.map(([, rect]) => rect.top));
   const bottom = Math.max(zone.bottom, ...covering.map(([, rect]) => rect.bottom));
@@ -78,6 +85,7 @@ function endPeek(peek: Peek | null, instant: boolean) {
   for (const panel of peek.panels) {
     if (instant) panel.style.transition = 'none';
     panel.style.removeProperty(peek.property);
+    panel.classList.remove(PEEKING_CLASS);
   }
   if (instant && peek.panels[0]) {
     // Commit the cams back on their spots before the transition is back on, so nothing animates from here
@@ -160,10 +168,14 @@ function onMouseMove(event: MouseEvent) {
   if (!frame) frame = requestAnimationFrame(update);
 }
 
+/** The grab dragToSwap starts a drag on: the cam's title bar, clear of the controls on it */
+const grabsPanel = (target: Element) => !!target.closest('.jsPanel-hdr') && !target.closest('button, input, a, .jsPanel-btn, .userAvatar');
+
 function onPointerDown(event: PointerEvent) {
   for (const side of sides) cancelDwell(side);
-  // Grabbing a cam that moved away drops it back on its spot first, so the drag starts from where the cam really is
-  if (event.target instanceof Element && event.target.closest(PANEL_SELECTOR)) endPeeks(true);
+  // Grabbing a cam that moved away drops it back on its spot first, so the drag starts from where the cam really is.
+  // A click on one of its controls doesn't: the cam has to stay under the pointer for the click to land on it.
+  if (event.button === 0 && event.target instanceof Element && grabsPanel(event.target)) endPeeks(true);
 }
 
 /** Re-reads the setting after it's toggled in the settings menu */
@@ -174,7 +186,8 @@ export function refreshCamsMoveAway() {
 
 /**
  * The cams cover the chat's tabs and the buddy list. Rest the pointer on a free bit of either one, and the cams in
- * front of it slide out (down, off the tabs; sideways, off the buddy list) until the pointer leaves.
+ * front of it slide out (down, off the tabs; sideways, off the buddy list) until the pointer leaves. Only those cams
+ * move: the ones behind them stay put, and the ones that moved slide in front of them.
  *
  * A cam under the pointer stays put, both ways: cams never slide out from under a pointer that's on one of them,
  * and the ones that did move only come back once the pointer is off them, so their controls never slip away as

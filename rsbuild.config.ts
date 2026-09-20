@@ -76,7 +76,7 @@ export default defineConfig({
             collapse_vars: true,
             unused: true,
             dead_code: true,
-            drop_console: false, // true strips every console.* call, errors included
+            drop_console: true, // strips every console.* call, warnings and errors included
             booleans: false,
             booleans_as_integers: false,
             conditionals: false,

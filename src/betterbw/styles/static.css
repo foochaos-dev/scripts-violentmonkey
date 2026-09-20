@@ -251,22 +251,10 @@ input.numberOfCams {
   text-decoration-thickness: 2px;
 }
 
-.jsPanel[data-status='undefined'] button:where([data-status-value='++']) {
-  display: none;
-}
-
-.jsPanel[data-status='--'] button:where([data-status-value='++']) {
-  display: none;
-}
-
-.jsPanel[data-status='-'] button:where([data-status-value='++']) {
-  display: none;
-}
-
-.jsPanel[data-status='+'] button:where([data-status-value='--']) {
-  display: none;
-}
-
+.jsPanel[data-status='undefined'] button:where([data-status-value='++']),
+.jsPanel[data-status='--'] button:where([data-status-value='++']),
+.jsPanel[data-status='-'] button:where([data-status-value='++']),
+.jsPanel[data-status='+'] button:where([data-status-value='--']),
 .jsPanel[data-status='++'] button:where([data-status-value='--']) {
   display: none;
 }

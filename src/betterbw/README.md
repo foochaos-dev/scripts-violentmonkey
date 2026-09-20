@@ -4,7 +4,7 @@ A userscript to improve Bateworld's VidChat experience. It adds features like:
 
 - **Automations** that keep your screen full of cams, picking the buddies you like (or the ones you haven't seen yet)
 - **Ratings** (`--`, `-`, `+`, `++`) that follow each buddy around: on their cam, on the sidebar and in the chat
-- **A tidy grid** of cams that adapts to your screen
+- **A tidy grid** of cams that adapts to your screen, and that you can rearrange by dragging
 - **Cam gestures**: scroll for volume, pinch to zoom, drag to look around
 - **"Watching me" stats**: your record audience, and more
 
@@ -14,22 +14,25 @@ See what changed in each version in the [changelog](CHANGELOG.md).
 ### How to use
 
 - Right after you select a room it will open 10 cams for you
-- Choose one of the automations on the top of the page (on the left of the ad)
-- You can also set how many cams you want to watch, and the size of the panels
-    - The cams shrink automatically when they don't fit your screen, so the size is a maximum
+- The controls live on the top bar, next to your picture:
+    - `⚙` : [Settings](#settings) (hover to peek, click to keep it open)
+    - `▦` : Rearranges the open cams into the grid (💪 for my fellow OCD's)
+    - `#` : How many cams you want to watch
+    - `⏸`/`▶` : Stops/starts opening cams automatically
+- Choose which cams to prioritize, the layout and the size of the cams in the settings
 
 ### Automations
 
-When enabled, every time a cam closes (or someone opens a public cam) it will try to open as many cams as possible according to the algorithm you selected:
+While it's running (`⏸` on the top bar), every time a cam closes (or someone opens a public cam) it will try to open as many cams as possible, prioritizing the cams you picked in the settings (**Which cams to prioritize**):
 
-- `ø` : **Disable automation** (default)
-    - Also useful to align all open cams into a grid (💪 for my fellow OCD's)
+- `Top` : **The Eye Candy** (default)
+    -  Prioritizes cams of buddies you liked
+    - `++`, `+`, `<new users>`, `-`
 - `New` : **The New Flesh**
     - Prioritizes cams of buddies that you haven't liked/disliked before
     - `<new users>`, `+`, `++`, `-`
-- `Top` : **The Eye Candy**
-    -  Prioritizes cams of buddies you liked
-    - `++`, `+`, `<new users>`, `-`
+
+Click `⏸` to stop it: the open cams are kept, and aligned into the grid. `▶` starts it again.
 
 Buddies marked with `--`, or hidden with `X`/`⏱`, are never picked.
 The automation takes a break while the tab is in the background (let's save BW's resources), and catches up when you come back.
@@ -38,14 +41,18 @@ The automation takes a break while the tab is in the background (let's save BW's
 
 Hover your buddy's cam to see the buttons. Hover the buttons to see what they do.
 
-- `X` (close button) : Hides this person for 1 min
-- `⏱` : Hides this person for 15 min
-- `⟳` : Rotates other user's cam (it's remembered for the next time)
-- `+` : You liked this buddy
+- On the top left, the ratings:
+    - `--` : Do not suggest this person (also closes the cam)
+    - `-` : You _sorta_ liked this buddy (it depends on the day, on your mood, on the weather...)
+    - `+` : You liked this buddy
     - `++` : You liked this buddy A LOT (this option appears after you liked `+` that buddy)
-- `-` : You _sorta_ liked this buddy (it depends on the day, on your mood, on the weather...)
-- `--` : Do not suggest this person
+- On the top right:
+    - `⏱` : Hides this person for 15 min
+    - `X` (close button) : Hides this person for 1 min
+- `⟳` (next to the zoom buttons) : Rotates the buddy's cam (it's remembered for the next time)
 - Click the buddy's picture to open their menu. It has the same rating and `⏱` buttons, and always shows the "whisper" option
+- **Middle click** (or `Ctrl` + click) the cam's title to close it and reduce the # of cams
+- **Drag** a cam by its title over another cam and hold it there for a second: the other cam moves to the empty spot, and you can drop yours in its place
 
 Buddies you haven't rated yet get their name underlined in orange.
 The open cams that are also watching you get a golden border and an 👁 icon.
@@ -55,11 +62,11 @@ A cam that doesn't load within 25 seconds is closed, and that buddy is hidden fo
 ### Cam gestures
 
 - **Hover** a cam to see its controls: play/pause, mute, volume, full screen and zoom. They hide again after 2 seconds without moving the mouse
-- **Scroll** over the controls to change the volume
+- **Scroll** over the controls to change the volume (can be turned off in the settings)
     - Fingers (or the mouse wheel) up: louder
     - Fine steps near 0%, a bit bigger near 100%
-    - The volume is remembered for each buddy; muting lasts until you reload the page
-- **Pinch** over a cam (or use the `+`/`−` buttons above its full screen button) to zoom into it, instead of zooming the whole page
+    - The volume is remembered for each buddy (new ones start at the default volume from the settings); muting lasts until you reload the page
+- **Pinch** (or `Ctrl` + scroll) over a cam, or use the `+`/`−` buttons above its full screen button, to zoom into it instead of zooming the whole page (can be turned off in the settings)
     - **Drag** or **scroll** to look around while zoomed, like on a zoomed-in webpage
     - `1×` zooms back out
 - **Double-click** a cam to go full screen
@@ -103,20 +110,27 @@ You can also get a notice in the chat when someone starts watching you (see [Set
 
 ### Settings
 
-Click `⚙` on the top bar:
+Hover `⚙` on the top bar to see them (click it to keep them open; `Esc` or a click outside closes them). Everything saves and applies right away:
 
-- **Tell me when someone starts watching me**: off, only buddies you liked (`+`, `++`), or everyone (except `--`). The notice shows up in the chat
+- **Tell me when someone starts watching me**: off, only `++` buddies, only buddies you liked (`+`, `++`), or everyone (except `--`). The notice shows up in the chat
+- **Sidebar**: for how long buddies are online
+- **Chat**: group messages in a row from the same buddy, enter/leave/kick notices (and after how long they disappear)
+- **Cams**:
+    - Which cams to prioritize (see [Automations](#automations))
+    - Default volume for new cams, and whether they start muted
+    - Scroll wheel changes the volume, and pinch (or `Ctrl` + scroll) zooms into the cam (see [Cam gestures](#cam-gestures))
+- **Layout** (switching it waits for the "Apply layout" button, since it rearranges every cam):
+    - **Adaptable grid** (default): pick how many rows fill the window's height, and the max size of the cams (they shrink when they don't fit)
+    - **Classic grid**: 3 rows of cams of an exact size, whatever the size of the window
 - **Cams move away**: rest the pointer on a free bit of the chat's tabs, or of the buddy list, and the cams in front of it slide out of the way until the pointer leaves. Cams under the pointer stay where they are, so you never lose their controls as you aim at them
-- Some of the chat's own options, that it doesn't let you change:
-    - Sidebar: for how long buddies are online, their ages, and how many people watch each cam
-    - Chat: group messages in a row from the same buddy, enter/leave/kick notices (and after how long they disappear)
-    - Cams: start them muted, and open the most popular one when entering a room
+
+The "Sidebar", "Chat" and "start muted" options are the chat's own, that it doesn't let you change. They apply to new messages, buddies and cams.
 
 ### Shift+click
 
 Some controls behave a bit differently if you hold shift when you click on them:
 
-- `X` (close button) : Also reduces the # of cams, so the Automation doesn't open a new cam
+- `X` (close button) : Also reduces the # of cams, so the automation doesn't open a new cam (same as middle click on the cam's title)
 - `⏱` : Hides the person for 2h
 - The camera icon on the sidebar: Increases the # of cams if necessary, then open that cam
 - The eye icon on the sidebar: Works as usual

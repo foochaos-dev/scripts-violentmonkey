@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts
-// @version     1.9.0
+// @version     1.9.1
 // @author      Thick Bro
 // @match       https://bateworld.com/html5-chat/chatroom.php
 // @match       https://bateworld.com//html5-chat/chat2/*
@@ -23,15 +23,11 @@
 // @license GPL-3.0-or-later
 // ==/UserScript==
 
-;// file://./src/betterbw/features/cooldown.ts
+// file://./src/betterbw/features/cooldown.ts
 function cooldownIt({ username, minutes = 15, panel }) {
 	if (!username) return;
 	const expiry = Date.now() + 60000 * minutes;
 	GM.setValue(`${username}_cooldown`, expiry);
-	console.log(
-		`User ${username} put on cooldown until`,
-		new Date(expiry).toISOString(),
-	);
 	if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
 }
 async function isOnCooldown(id) {
@@ -44,18 +40,17 @@ async function isOnCooldown(id) {
 async function sweepExpiredCooldowns() {
 	const keys = (await GM.listValues()).filter(key => key.endsWith("_cooldown"));
 	const now = Date.now();
-	for (const key of keys)
-		if (now >= Number(await GM.getValue(key))) await GM.deleteValue(key);
+	for (const key of keys) if (now >= Number(await GM.getValue(key))) await GM.deleteValue(key);
 }
 const sessionCooldown = new Set();
 
-;// file://./src/betterbw/utils/filters.ts
+// file://./src/betterbw/utils/filters.ts
 const isDefined = v => null != v;
 
-;// file://./src/betterbw/utils/math.ts
+// file://./src/betterbw/utils/math.ts
 const clamp = (min, mid, max) => Math.max(min, Math.min(mid, max));
 
-;// file://./src/betterbw/features/settings.ts
+// file://./src/betterbw/features/settings.ts
 const DEFAULTS = {
 	watchNotifications: "off",
 	defaultVolume: 0.08,
@@ -70,28 +65,10 @@ const DEFAULTS = {
 const getSetting = key => GM_getValue(`settings.${key}`, DEFAULTS[key]);
 const setSetting = (key, value) => GM.setValue(`settings.${key}`, value);
 const SITE_OPTIONS = [
-	{
-		group: "Sidebar",
-		key: "displayConnectedSince",
-		label: "For how long buddies are online",
-	},
-	{
-		group: "Chat",
-		key: "groupMessages",
-		label: "Group messages in a row from the same buddy",
-	},
-	{
-		group: "Chat",
-		key: "showMessageServer",
-		label: "Enter, leave and kick notices",
-	},
-	{
-		group: "Chat",
-		key: "hideMessageServerAfterNseconds",
-		label: "Hide those notices after",
-		type: "number",
-		unit: "s (0: never)",
-	},
+	{ group: "Sidebar", key: "displayConnectedSince", label: "For how long buddies are online" },
+	{ group: "Chat", key: "groupMessages", label: "Group messages in a row from the same buddy" },
+	{ group: "Chat", key: "showMessageServer", label: "Enter, leave and kick notices" },
+	{ group: "Chat", key: "hideMessageServerAfterNseconds", label: "Hide those notices after", type: "number", unit: "s (0: never)" },
 	{ group: "Cams", key: "soundMutedAtStart", label: "Start cams muted" },
 ];
 const FORCED_SITE_OPTIONS = { openMostPopularCamAutomatically: "0" };
@@ -108,12 +85,9 @@ function setSiteOption(key, value) {
 	GM.setValue(siteOptionKey(key), value);
 }
 
-;// file://./src/betterbw/utils/organizePanels.ts
+// file://./src/betterbw/utils/organizePanels.ts
 
-const LAYOUT_LABELS = {
-	classic: "Classic grid (3 rows)",
-	adaptable: "Adaptable grid (N rows)",
-};
+const LAYOUT_LABELS = { classic: "Classic grid (3 rows)", adaptable: "Adaptable grid (N rows)" };
 const organizePanels_base = { my: "right-top", at: "right-top" };
 const panelRatio = 314 / 365;
 const gridconf = {
@@ -130,35 +104,17 @@ function classicLayout() {
 	return { width, height: width * panelRatio, cols: 3, rows: 3 };
 }
 function adaptableLayout() {
-	const areaWidth =
-		innerWidth
-		- (document.getElementById("tabsAndFooter")?.getBoundingClientRect().right
-			?? 0)
-		- gridconf.MARGIN_RIGHT;
+	const areaWidth = innerWidth - (document.getElementById("tabsAndFooter")?.getBoundingClientRect().right ?? 0) - gridconf.MARGIN_RIGHT;
 	const areaHeight = innerHeight - gridconf.MARGIN_TOP;
 	const rows = clamp(1, getSetting("adaptableRows"), 8);
 	const fitHeight = (areaHeight - (rows - 1) * gridconf.GAP_Y) / rows;
-	const width = Math.floor(
-		Math.max(120, Math.min(gridconf.WIDTH, areaWidth, fitHeight / panelRatio)),
-	);
-	const cols = Math.max(
-		1,
-		Math.floor((areaWidth + gridconf.GAP_X) / (width + gridconf.GAP_X)),
-	);
+	const width = Math.floor(Math.max(120, Math.min(gridconf.WIDTH, areaWidth, fitHeight / panelRatio)));
+	const cols = Math.max(1, Math.floor((areaWidth + gridconf.GAP_X) / (width + gridconf.GAP_X)));
 	return { width, height: width * panelRatio, cols, rows };
 }
-const computeLayout = () =>
-	"classic" === getSetting("layout") ? classicLayout() : adaptableLayout();
+const computeLayout = () => ("classic" === getSetting("layout") ? classicLayout() : adaptableLayout());
 function camsWidth() {
-	return (
-		3
-			* (("classic" === getSetting("layout")
-				? getSetting("classicWidth")
-				: gridconf.WIDTH)
-				+ gridconf.GAP_X)
-		- gridconf.GAP_X
-		+ gridconf.MARGIN_RIGHT
-	);
+	return 3 * (("classic" === getSetting("layout") ? getSetting("classicWidth") : gridconf.WIDTH) + gridconf.GAP_X) - gridconf.GAP_X + gridconf.MARGIN_RIGHT;
 }
 function* gridPositions({ width, height, cols, rows }) {
 	const place = (c, r) => ({
@@ -166,9 +122,7 @@ function* gridPositions({ width, height, cols, rows }) {
 		offsetX: -(gridconf.MARGIN_RIGHT + c * (width + gridconf.GAP_X)),
 		offsetY: gridconf.MARGIN_TOP + r * (height + gridconf.GAP_Y),
 	});
-	for (let band = 0; band < rows; band += 2)
-		for (let c = 0; c < cols; c++)
-			for (let r = band; r < Math.min(band + 2, rows); r++) yield place(c, r);
+	for (let band = 0; band < rows; band += 2) for (let c = 0; c < cols; c++) for (let r = band; r < Math.min(band + 2, rows); r++) yield place(c, r);
 	for (let c = cols; ; c++) for (let r = 0; r < rows; r++) yield place(c, r);
 }
 function placeInSlot(panel, index) {
@@ -176,17 +130,10 @@ function placeInSlot(panel, index) {
 	const positions = gridPositions(layout);
 	for (let i = 0; i < index; i++) positions.next();
 	const position = positions.next().value;
-	if (position)
-		jsPanel.activePanels
-			.getPanel(panel.id)
-			?.resize({ width: layout.width, height: layout.height })
-			.reposition(position);
+	if (position) jsPanel.activePanels.getPanel(panel.id)?.resize({ width: layout.width, height: layout.height }).reposition(position);
 }
 function organizePanels() {
-	document.documentElement.style.setProperty(
-		"--bbw-cams-width",
-		`${camsWidth()}px`,
-	);
+	document.documentElement.style.setProperty("--bbw-cams-width", `${camsWidth()}px`);
 	const opened = queryPanels();
 	if (!opened.length) return;
 	const layout = computeLayout();
@@ -201,9 +148,7 @@ function organizePanels() {
 			if (gridIndexNumber > lastIndex) lastIndex = gridIndexNumber;
 		} else groups.newlyCreated.push(panel);
 	}
-	const grid = Array(
-		Math.max(+chatHTML5.roles.user.webcamMax, opened.length, lastIndex),
-	).fill(null);
+	const grid = Array(Math.max(+chatHTML5.roles.user.webcamMax, opened.length, lastIndex)).fill(null);
 	for (const panel of groups.prePositioned)
 		if (null != panel.dataset.gridIndex && "" !== panel.dataset.gridIndex)
 			if (grid[+panel.dataset.gridIndex]) {
@@ -237,10 +182,7 @@ function organizePanels() {
 			poppedIn.push(place);
 		}
 		const panel = jsPanel.activePanels.getPanel(place.id);
-		if (panel)
-			panel
-				.resize({ width: layout.width, height: layout.height })
-				.reposition(position);
+		if (panel) panel.resize({ width: layout.width, height: layout.height }).reposition(position);
 		if (isNew) place.dataset.gridIndex = index.toString();
 	});
 	if (poppedIn.length) {
@@ -251,7 +193,7 @@ function organizePanels() {
 	}
 }
 
-;// file://./src/betterbw/utils/scrappers.ts
+// file://./src/betterbw/utils/scrappers.ts
 function getUserId(panel) {
 	return panel.id.split("_")[2] || $("[data-id]", panel)[0]?.dataset.id;
 }
@@ -268,24 +210,23 @@ function getUserById(userId) {
 	return { obj: user, username: user.username.split("_")[0] };
 }
 
-;// file://./src/betterbw/utils/sortFunctions.ts
+// file://./src/betterbw/utils/sortFunctions.ts
 const topRandom = (a, b) => b.bias - a.bias || Math.random() - 0.5;
 
-;// file://./src/betterbw/algo.ts
+// file://./src/betterbw/algo.ts
 let algo_algo = "";
 const getAlgo = () => algo_algo;
 const setAlgo = val => {
 	document.body.dataset.algo = algo_algo = val;
 };
 
-;// file://./src/betterbw/utils/openPanel.ts
+// file://./src/betterbw/utils/openPanel.ts
 
 let openPanel_roomSelected = false;
 const setRoomSelected = () => (openPanel_roomSelected = true);
 const PANEL_SELECTOR = ".jsPanel.jsPanel-theme-default";
 const queryPanels = () => document.querySelectorAll(PANEL_SELECTOR);
-const queryPanel = (target = document) =>
-	target.querySelector(PANEL_SELECTOR);
+const queryPanel = (target = document) => target.querySelector(PANEL_SELECTOR);
 function clickWebcamButton(button) {
 	const menuWasOpen = $("#userMenu").is(":visible");
 	button.trigger("click");
@@ -294,10 +235,7 @@ function clickWebcamButton(button) {
 function tryToOpenPanel(candidate) {
 	clickWebcamButton($(".webcamBtn", candidate.item));
 }
-const hasPanel = username =>
-	Array.from(document.querySelectorAll(PANEL_SELECTOR)).some(
-		panel => scrappers_getUsername(panel) === username,
-	);
+const hasPanel = username => Array.from(document.querySelectorAll(PANEL_SELECTOR)).some(panel => scrappers_getUsername(panel) === username);
 function verifyOpened(candidate, fallbacks) {
 	setTimeout(() => {
 		if (hasPanel(candidate.username)) return;
@@ -310,19 +248,13 @@ function verifyOpened(candidate, fallbacks) {
 			"" === getAlgo()
 			|| !(() => {
 				const max = +chatHTML5.roles.user.webcamMax;
-				return (
-					document.querySelectorAll(PANEL_SELECTOR).length < max
-					&& chatHTML5.getWebcamNumber() < max
-				);
+				return document.querySelectorAll(PANEL_SELECTOR).length < max && chatHTML5.getWebcamNumber() < max;
 			})()
 		)
 			return;
 		let next = fallbacks.shift();
 		while (next && hasPanel(next.username)) next = fallbacks.shift();
 		if (!next) return;
-		console.warn(
-			`[BBW] Cam for ${candidate.username} didn't open; trying ${next.username} instead`,
-		);
 		tryToOpenPanel(next);
 		verifyOpened(next, fallbacks);
 	}, 6000);
@@ -330,11 +262,7 @@ function verifyOpened(candidate, fallbacks) {
 const getCandidates = async (compareFn = topRandom, _biases = {}) => {
 	const biases = { "-": 1, undefined: 2, "+": 3, "++": 4, ..._biases };
 	const promises = Array.from(
-		document
-			.querySelectorAll(
-				'#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))',
-			)
-			.values(),
+		document.querySelectorAll('#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))').values(),
 	).map(async item => {
 		const full_username = item.dataset.username;
 		const username = full_username?.split("_")[0];
@@ -343,31 +271,17 @@ const getCandidates = async (compareFn = topRandom, _biases = {}) => {
 		const status = await GM.getValue(`${username}_status`);
 		if ("--" === status) return;
 		if (await isOnCooldown(username)) return;
-		return {
-			item,
-			username,
-			status,
-			bias: biases[status],
-			onlineSince:
-				(item.dataset.id && getUserById(item.dataset.id)?.obj.date) || 0,
-		};
+		return { item, username, status, bias: biases[status], onlineSince: (item.dataset.id && getUserById(item.dataset.id)?.obj.date) || 0 };
 	});
-	return await Promise.all(promises).then(list =>
-		list.filter(isDefined).sort(compareFn),
-	);
+	return await Promise.all(promises).then(list => list.filter(isDefined).sort(compareFn));
 };
 function openCandidates(candidates) {
 	if (!openPanel_roomSelected) return;
 	const opened = document.querySelectorAll(PANEL_SELECTOR);
 	let openedLength = opened.length || 0;
 	const maxToOpen = +chatHTML5.roles.user.webcamMax;
-	if (openedLength >= maxToOpen) {
-		organizePanels();
-		return console.log(`Max number of panels (${maxToOpen}) already open`);
-	}
-	const openedIds = new Set(
-		Array.from(opened).map(panel => scrappers_getUsername(panel)),
-	);
+	if (openedLength >= maxToOpen) return void organizePanels();
+	const openedIds = new Set(Array.from(opened).map(panel => scrappers_getUsername(panel)));
 	while (openedLength < maxToOpen && candidates.length > 0) {
 		const c = candidates.shift();
 		if (openedIds.has(c.username)) continue;
@@ -378,12 +292,8 @@ function openCandidates(candidates) {
 	organizePanels();
 }
 
-;// file://./src/betterbw/utils/waitToBe.ts
-function waitToBe(
-	selector,
-	attributeFilter = ["aria-hidden"],
-	predicate = el => "false" !== el.getAttribute("aria-hidden"),
-) {
+// file://./src/betterbw/utils/waitToBe.ts
+function waitToBe(selector, attributeFilter = ["aria-hidden"], predicate = el => "false" !== el.getAttribute("aria-hidden")) {
 	return new Promise(resolve => {
 		let attrObserver = null;
 		let domObserver = null;
@@ -406,11 +316,7 @@ function waitToBe(
 			}
 			(attrObserver = new MutationObserver(muts => {
 				for (const m of muts)
-					if (
-						"attributes" === m.type
-						&& m.attributeName
-						&& attributeFilter.includes(m.attributeName)
-					) {
+					if ("attributes" === m.type && m.attributeName && attributeFilter.includes(m.attributeName)) {
 						if (predicate(el)) {
 							cleanup();
 							resolve(el);
@@ -426,9 +332,7 @@ function waitToBe(
 			for (const m of muts)
 				for (const node of m.addedNodes) {
 					if (!(node instanceof HTMLElement)) continue;
-					const found = node.matches(selector)
-						? node
-						: node.querySelector(selector);
+					const found = node.matches(selector) ? node : node.querySelector(selector);
 					if (found) {
 						if (attachAttrObserver(found)) {
 							if (domObserver) {
@@ -443,20 +347,14 @@ function waitToBe(
 	});
 }
 
-;// file://./src/betterbw/utils/formatters.ts
-const dataUsername = id =>
-	`[data-username="${id}"],[data-username^="${id}_"]`;
-const HTML_ESCAPES = {
-	"&": "&amp;",
-	"<": "&lt;",
-	">": "&gt;",
-	'"': "&quot;",
-	"'": "&#39;",
-};
-const escapeHtml = text =>
-	text.replace(/[&<>"']/g, char => HTML_ESCAPES[char]);
+const { h, Fragment } = window.preact;
 
-;// file://./src/betterbw/styles/tiers.css?raw
+// file://./src/betterbw/utils/formatters.ts
+const dataUsername = id => `[data-username="${id}"],[data-username^="${id}_"]`;
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const escapeHtml = text => text.replace(/[&<>"']/g, char => HTML_ESCAPES[char]);
+
+// file://./src/betterbw/styles/tiers.css?raw
 const tiers_css = `
 #userList .userItem:where(.group_minus_minus) {
 	opacity: 0.3 !important;
@@ -484,7 +382,7 @@ const tiers_css = `
 }
 `;
 
-;// file://./src/betterbw/utils/debounce.ts
+// file://./src/betterbw/utils/debounce.ts
 function debounce(func, wait = 200) {
 	let timeout;
 	return function (...args) {
@@ -513,14 +411,12 @@ function enqueueAsync(func) {
 	};
 }
 
-;// file://./src/betterbw/dynamicStyle.ts
+// file://./src/betterbw/dynamicStyle.ts
 
 const dataUserItems = group => group.map(dataUsername).join(",");
 async function getCSS() {
 	const keys = (await GM.listValues()).filter(key => key.endsWith("_status"));
-	const valuesEntries = await Promise.all(
-		keys.map(async key => [key, await GM.getValue(key)]),
-	);
+	const valuesEntries = await Promise.all(keys.map(async key => [key, await GM.getValue(key)]));
 	const groups = { "--": [], "-": [], "+": [], "++": [] };
 	for (const [key, value] of valuesEntries) {
 		const id = key.split("_")[0];
@@ -532,10 +428,7 @@ async function getCSS() {
 		group_plus: dataUserItems(groups["+"]),
 		group_plus_plus: dataUserItems(groups["++"]),
 	};
-	return tiers_css.replace(
-		/\.(group_\w+)/gm,
-		(_match, key, openStyle) => selectors[key] + openStyle,
-	);
+	return tiers_css.replace(/\.(group_\w+)/gm, (_match, key, openStyle) => selectors[key] + openStyle);
 }
 const dynamicStyle = GM_addStyle("");
 const refreshDynamicStyle = enqueueAsync(async () => {
@@ -543,7 +436,7 @@ const refreshDynamicStyle = enqueueAsync(async () => {
 });
 refreshDynamicStyle();
 
-;// file://./src/betterbw/features/rotateCam.tsx
+// file://./src/betterbw/features/rotateCam.tsx
 function getRotation(element) {
 	if (!element || !element.dataset.rotation) return 0;
 	return parseInt(element.dataset.rotation, 10) || 0;
@@ -554,32 +447,26 @@ async function rotateCam({ id, panel }) {
 	return GM.setValue(`${id}_rotation`, newRotation);
 }
 
-;// file://./src/betterbw/features/audioMuted.ts
+// file://./src/betterbw/features/audioMuted.ts
 const sessionAudioMuted = new Map();
 
-;// file://./src/betterbw/features/sessionZoom.ts
+// file://./src/betterbw/features/sessionZoom.ts
 const sessionZoom = new Map();
 
-;// file://./src/betterbw/utils/wheel.ts
+// file://./src/betterbw/utils/wheel.ts
 const LINE_PX = 100 / 3;
 const IS_MAC = /Mac/.test(navigator.userAgent);
 function unitPx(mode) {
-	return mode === WheelEvent.DOM_DELTA_LINE
-		? LINE_PX
-		: mode === WheelEvent.DOM_DELTA_PAGE
-			? 800
-			: 1;
+	return mode === WheelEvent.DOM_DELTA_LINE ? LINE_PX : mode === WheelEvent.DOM_DELTA_PAGE ? 800 : 1;
 }
 function deltaPx(event) {
 	return event.deltaY * unitPx(event.deltaMode);
 }
 function upwardPx(event) {
-	return (event.webkitDirectionInvertedFromDevice ?? IS_MAC)
-		? deltaPx(event)
-		: -deltaPx(event);
+	return (event.webkitDirectionInvertedFromDevice ?? IS_MAC) ? deltaPx(event) : -deltaPx(event);
 }
 
-;// file://./src/betterbw/styles/videoControls.css?raw
+// file://./src/betterbw/styles/videoControls.css?raw
 const vc_css = `
 .bbw-controls {
 	position: absolute;
@@ -658,7 +545,7 @@ const vc_css = `
 }
 `;
 
-;// file://./src/betterbw/features/videoControls.ts
+// file://./src/betterbw/features/videoControls.ts
 
 let styleAdded = false;
 function volumeOnScroll(video) {
@@ -676,11 +563,7 @@ function volumeOnScroll(video) {
 		const upward = upwardPx(event);
 		if (video.muted && upward > 0) video.muted = false;
 		const idle = null === target;
-		target = clamp(
-			0,
-			(target ?? video.volume ** 0.3333333333333333) + upward / 6000,
-			1,
-		);
+		target = clamp(0, (target ?? video.volume ** 0.3333333333333333) + upward / 6000, 1);
 		if (idle) requestAnimationFrame(step);
 	};
 }
@@ -761,13 +644,10 @@ function attachVideoControls(video, zoom, onRotate) {
 		if (video.controls) video.controls = false;
 	}).observe(video, { attributes: true, attributeFilter: ["controls"] });
 	const container = video.parentElement;
-	if ("static" === getComputedStyle(container).position)
-		container.style.position = "relative";
+	if ("static" === getComputedStyle(container).position) container.style.position = "relative";
 	const bar = document.createElement("div");
 	bar.className = "bbw-controls";
-	const play = makeButton("Play / pause", () =>
-		video.paused ? video.play() : video.pause(),
-	);
+	const play = makeButton("Play / pause", () => (video.paused ? video.play() : video.pause()));
 	const mute = makeButton("Mute", () => {
 		video.muted = !video.muted;
 	});
@@ -783,14 +663,8 @@ function attachVideoControls(video, zoom, onRotate) {
 	});
 	const spacer = document.createElement("span");
 	spacer.className = "bbw-spacer";
-	const toggleFullscreen = () =>
-		document.fullscreenElement === container
-			? document.exitFullscreen()
-			: container.requestFullscreen();
-	const fullscreen = makeButton(
-		"Full screen\nor double-click the cam",
-		toggleFullscreen,
-	);
+	const toggleFullscreen = () => (document.fullscreenElement === container ? document.exitFullscreen() : container.requestFullscreen());
+	const fullscreen = makeButton("Full screen\nor double-click the cam", toggleFullscreen);
 	video.addEventListener("dblclick", toggleFullscreen);
 	const floating = document.createElement("div");
 	floating.className = "bbw-floating-controls";
@@ -799,18 +673,11 @@ function attachVideoControls(video, zoom, onRotate) {
 	container.appendChild(bar);
 	const sync = () => {
 		setIcon(play, video.paused ? "play" : "pause");
-		setIcon(
-			mute,
-			video.muted || 0 === video.volume ? "volume-off" : "volume-up",
-		);
-		setIcon(
-			fullscreen,
-			document.fullscreenElement === container ? "compress" : "expand",
-		);
+		setIcon(mute, video.muted || 0 === video.volume ? "volume-off" : "volume-up");
+		setIcon(fullscreen, document.fullscreenElement === container ? "compress" : "expand");
 		volume.value = String(video.muted ? 0 : video.volume ** 0.3333333333333333);
 	};
-	for (const type of ["play", "pause", "volumechange"])
-		video.addEventListener(type, sync);
+	for (const type of ["play", "pause", "volumechange"]) video.addEventListener(type, sync);
 	container.addEventListener("fullscreenchange", sync);
 	sync();
 	autoHide(container, bar, video);
@@ -825,15 +692,11 @@ function attachVideoControls(video, zoom, onRotate) {
 	);
 }
 
-;// file://./src/betterbw/features/videoGestures.ts
+// file://./src/betterbw/features/videoGestures.ts
 
 function isWheelNotch(event) {
 	const delta = Math.abs(event.deltaY);
-	return (
-		event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL
-		|| delta % 4.000244140625 === 0
-		|| (Number.isInteger(delta) && delta >= 50)
-	);
+	return event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || delta % 4.000244140625 === 0 || (Number.isInteger(delta) && delta >= 50);
 }
 function zoomAndPan(video, initial) {
 	let scale = initial?.scale ?? 1;
@@ -860,25 +723,13 @@ function zoomAndPan(video, initial) {
 	};
 	const zoomAt = (rect, cx, cy, factor) => {
 		const next = clamp(1, scale * factor, 4);
-		moveTo(
-			rect,
-			cx - (next / scale) * (cx - x),
-			cy - (next / scale) * (cy - y),
-			next,
-		);
+		moveTo(rect, cx - (next / scale) * (cx - x), cy - (next / scale) * (cy - y), next);
 	};
 	video.addEventListener("pointerdown", event => {
 		if (1 === scale || 0 !== event.button) return;
 		event.preventDefault();
 		video.setPointerCapture(event.pointerId);
-		drag = {
-			pointerId: event.pointerId,
-			startX: event.clientX,
-			startY: event.clientY,
-			fromX: x,
-			fromY: y,
-			moved: false,
-		};
+		drag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, fromX: x, fromY: y, moved: false };
 	});
 	video.addEventListener("pointermove", event => {
 		if (drag?.pointerId !== event.pointerId) return;
@@ -904,11 +755,7 @@ function zoomAndPan(video, initial) {
 			zoomAt(rect, cx, cy, Math.exp(-clamp(-25, deltaPx(event), 25) / 100));
 		},
 		onPanWheel: event => {
-			moveTo(
-				video.getBoundingClientRect(),
-				x - event.deltaX * unitPx(event.deltaMode),
-				y - deltaPx(event),
-			);
+			moveTo(video.getBoundingClientRect(), x - event.deltaX * unitPx(event.deltaMode), y - deltaPx(event));
 		},
 		zoomIn: () => zoomAt(video.getBoundingClientRect(), 0, 0, 1.25),
 		zoomOut: () => zoomAt(video.getBoundingClientRect(), 0, 0, 0.8),
@@ -935,10 +782,10 @@ function attachVideoGestures(video, onRotate, initial) {
 	return zoom;
 }
 
-;// file://./src/betterbw/features/panelActions.tsx
+// file://./src/betterbw/features/panelActions.tsx
 
 const BtnClassify = ({ getUsername, panel, value, title, onClick }) =>
-	preact.h(
+	h(
 		"button",
 		{
 			"data-status-value": value,
@@ -946,10 +793,7 @@ const BtnClassify = ({ getUsername, panel, value, title, onClick }) =>
 			className: "panel-action-btn",
 			onClick: e => {
 				const username = getUsername();
-				if (username)
-					GM.setValue(`${username}_status`, value).then(() =>
-						refreshDynamicStyle(),
-					);
+				if (username) GM.setValue(`${username}_status`, value).then(() => refreshDynamicStyle());
 				if (panel) panel.dataset.status = value;
 				onClick?.(e);
 			},
@@ -957,7 +801,7 @@ const BtnClassify = ({ getUsername, panel, value, title, onClick }) =>
 		value,
 	);
 const BtnMinus2 = ({ getUsername, panel }) =>
-	preact.h(BtnClassify, {
+	h(BtnClassify, {
 		getUsername: getUsername,
 		panel: panel,
 		value: "--",
@@ -966,66 +810,33 @@ const BtnMinus2 = ({ getUsername, panel }) =>
 			if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
 		},
 	});
-const BtnMinus1 = props =>
-	preact.h(BtnClassify, {
-		value: "-",
-		title: "So so\nIt depends on the day, on the mood...",
-		...props,
-	});
-const BtnPlus1 = props =>
-	preact.h(BtnClassify, {
-		value: "+",
-		title: "Yeah\nI liked you, buddy",
-		...props,
-	});
-const BtnPlus2 = props =>
-	preact.h(BtnClassify, {
-		value: "++",
-		title: "Ohhh Yeah!\nI liked you a lot, buddy!",
-		...props,
-	});
+const BtnMinus1 = props => h(BtnClassify, { value: "-", title: "So so\nIt depends on the day, on the mood...", ...props });
+const BtnPlus1 = props => h(BtnClassify, { value: "+", title: "Yeah\nI liked you, buddy", ...props });
+const BtnPlus2 = props => h(BtnClassify, { value: "++", title: "Ohhh Yeah!\nI liked you a lot, buddy!", ...props });
 const BtnCooldown = ({ panel, getUsername }) =>
-	preact.h(
+	h(
 		"button",
 		{
-			title:
-				"Cooldown 15m\nDo not suggest this person for the next 15 minutes\n\nShift + click: Cooldown 2h",
+			title: "Cooldown 15m\nDo not suggest this person for the next 15 minutes\n\nShift + click: Cooldown 2h",
 			className: "panel-action-btn",
 			onClick: event => {
-				event?.shiftKey
-					? cooldownIt({ username: getUsername(), panel, minutes: 120 })
-					: cooldownIt({ username: getUsername(), panel });
+				event?.shiftKey ? cooldownIt({ username: getUsername(), panel, minutes: 120 }) : cooldownIt({ username: getUsername(), panel });
 			},
 		},
 		"⏱",
 	);
 const PanelActions = ({ panel, username }) => {
 	const props = { panel, getUsername: () => username };
-	return preact.h(
-		preact.Fragment,
+	return h(
+		Fragment,
 		null,
-		preact.h(
-			"div",
-			{ class: "panel-action" },
-			preact.h(BtnMinus2, props),
-			preact.h(BtnMinus1, props),
-			preact.h(BtnPlus1, props),
-			preact.h(BtnPlus2, props),
-		),
-		preact.h("div", { class: "panel-cooldown" }, preact.h(BtnCooldown, props)),
+		h("div", { class: "panel-action" }, h(BtnMinus2, props), h(BtnMinus1, props), h(BtnPlus1, props), h(BtnPlus2, props)),
+		h("div", { class: "panel-cooldown" }, h(BtnCooldown, props)),
 	);
 };
 const MenuActions = () => {
 	const props = { getUsername: getLatestUser };
-	return preact.h(
-		"div",
-		null,
-		preact.h(BtnCooldown, props),
-		preact.h(BtnPlus2, props),
-		preact.h(BtnPlus1, props),
-		preact.h(BtnMinus1, props),
-		preact.h(BtnMinus2, props),
-	);
+	return h("div", null, h(BtnCooldown, props), h(BtnPlus2, props), h(BtnPlus1, props), h(BtnMinus1, props), h(BtnMinus2, props));
 };
 function getLatestUser() {
 	const selected = getUserById(chatHTML5.myUser.selectedUserid);
@@ -1063,7 +874,7 @@ async function attachPanelActions(panel) {
 	if ("1" === panel.dataset.actionsAttached) return;
 	panel.dataset.actionsAttached = "1";
 	const panelJS = jsPanel.activePanels.getPanel(panel.id);
-	if (!panelJS) return console.warn("Panel not found for", panel.id);
+	if (!panelJS) return;
 	resizePanel(panelJS);
 	const header = $(".jsPanel-hdr .jsPanel-title", panel)[0];
 	if (!header) return;
@@ -1073,26 +884,21 @@ async function attachPanelActions(panel) {
 	panel.dataset.status = await GM.getValue(`${username}_status`);
 	const actions = document.createElement("div");
 	header.appendChild(actions);
-	preact.render(preact.h(PanelActions, { username: username, panel: panel }), actions);
+	preact.render(h(PanelActions, { username: username, panel: panel }), actions);
 	panel.dataset.rotation = await GM.getValue(`${username}_rotation`, "0");
 	$(".jsPanel-btn.jsPanel-btn-close", panel)
 		.attr("title", "Close\n\nShift + click: also reduce the # of cams")
 		.on("click", event => {
-			if (event.shiftKey)
-				chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
+			if (event.shiftKey) chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
 			cooldownIt({ username: username, minutes: 1 });
 		});
 	$(header)
-		.attr(
-			"title",
-			"Middle click or Ctrl + click: close and reduce the # of cams",
-		)
+		.attr("title", "Middle click or Ctrl + click: close and reduce the # of cams")
 		.on("mousedown", event => {
 			if (1 === event.button) event.preventDefault();
 		})
 		.on("auxclick click", event => {
-			if ("auxclick" === event.type ? 1 !== event.button : !event.ctrlKey)
-				return;
+			if ("auxclick" === event.type ? 1 !== event.button : !event.ctrlKey) return;
 			event.preventDefault();
 			chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
 			cooldownIt({ username, minutes: 1, panel });
@@ -1101,24 +907,15 @@ async function attachPanelActions(panel) {
 		event.stopPropagation();
 		if (!("pageX" in event && "pageY" in event)) return;
 		if ($("#userMenu").is(":visible")) return void $("#userMenu").hide();
-		$(
-			`#userList .userItem[data-id=${JSON.stringify(panel.id.split("_")[2])}]`,
-		).trigger(
+		$(`#userList .userItem[data-id=${JSON.stringify(panel.id.split("_")[2])}]`).trigger(
 			new jQuery.Event("click", { pageX: event.pageX + 3, pageY: event.pageY }),
 		);
 	});
 	const video = panel.querySelector("video");
 	if (video) {
 		if (sessionAudioMuted.get(username)) video.muted = true;
-		video.volume = await GM.getValue(
-			`${username}_volume`,
-			getSetting("defaultVolume"),
-		);
-		const zoom = attachVideoGestures(
-			video,
-			() => rotateCam({ id: username, panel }),
-			sessionZoom.get(username),
-		);
+		video.volume = await GM.getValue(`${username}_volume`, getSetting("defaultVolume"));
+		const zoom = attachVideoGestures(video, () => rotateCam({ id: username, panel }), sessionZoom.get(username));
 		zoom.onChange(
 			debounce(() => {
 				sessionZoom.set(username, zoom.getState());
@@ -1138,7 +935,7 @@ function persistVolumeChange(video, username) {
 	);
 }
 
-;// file://./src/betterbw/utils/spyOn.ts
+// file://./src/betterbw/utils/spyOn.ts
 function spyOn(obj, watchers) {
 	return Proxy.revocable(obj, {
 		set(target, prop, value) {
@@ -1149,7 +946,7 @@ function spyOn(obj, watchers) {
 	});
 }
 
-;// file://./src/betterbw/styles/openPanels.css?raw
+// file://./src/betterbw/styles/openPanels.css?raw
 const openPanels_css = `
 [data-username="I_am_watching"] {
 	#userList &.userItem .webcamBtn {
@@ -1202,7 +999,7 @@ const openPanels_css = `
 }
 `;
 
-;// file://./src/betterbw/dynamicOpenedStyle.ts
+// file://./src/betterbw/dynamicOpenedStyle.ts
 
 const dynamicOpenedStyle = GM_addStyle("");
 function updateCssForOpenedPanels() {
@@ -1218,22 +1015,19 @@ function updateCssForOpenedPanels() {
 				`body:has(#userList .userItem:where(${dataUsername(id)}) .webcamBtn.visible i.lock.fa-lock) .jsPanel[data-username="${id}"] .jsPanel-title>span:before`,
 		)
 		.join(",");
-	dynamicOpenedStyle.innerHTML = openPanels_css.replace(
-		/(\.watching_private_cam|\[data-username="I_am_watching"\])/g,
-		arg => {
-			switch (arg) {
-				case ".watching_private_cam":
-					return selectorsWatchingPrivateCams;
-				case '[data-username="I_am_watching"]':
-					return selectorsIamWatching;
-				default:
-					return arg;
-			}
-		},
-	);
+	dynamicOpenedStyle.innerHTML = openPanels_css.replace(/(\.watching_private_cam|\[data-username="I_am_watching"\])/g, arg => {
+		switch (arg) {
+			case ".watching_private_cam":
+				return selectorsWatchingPrivateCams;
+			case '[data-username="I_am_watching"]':
+				return selectorsIamWatching;
+			default:
+				return arg;
+		}
+	});
 }
 
-;// file://./src/betterbw/features/tabFocus.ts
+// file://./src/betterbw/features/tabFocus.ts
 const tabFocused = () => "visible" === document.visibilityState;
 const whenTabFocused = callback => {
 	document.addEventListener(
@@ -1245,14 +1039,12 @@ const whenTabFocused = callback => {
 	);
 };
 
-;// file://./src/betterbw/utils/observeIt.ts
+// file://./src/betterbw/utils/observeIt.ts
 function iterate(nodes, selector, fn) {
 	let found = false;
 	for (const node of nodes) {
 		if (!(node instanceof HTMLElement)) continue;
-		const panels = node.matches(selector)
-			? [node]
-			: node.querySelectorAll(selector);
+		const panels = node.matches(selector) ? [node] : node.querySelectorAll(selector);
 		if (panels.length) {
 			if (fn) panels.forEach(fn);
 			found = true;
@@ -1260,21 +1052,13 @@ function iterate(nodes, selector, fn) {
 	}
 	return found;
 }
-function observeIt({
-	target,
-	selector,
-	forEachAddedNode,
-	forEachRemovedNode,
-	cleanup,
-}) {
+function observeIt({ target, selector, forEachAddedNode, forEachRemovedNode, cleanup }) {
 	const observerPanels = new MutationObserver(mutations => {
 		let nodesAdded = false;
 		let nodesRemoved = false;
 		for (const mutation of mutations) {
-			if (iterate(mutation.addedNodes, selector, forEachAddedNode))
-				nodesAdded = true;
-			if (iterate(mutation.removedNodes, selector, forEachRemovedNode))
-				nodesRemoved = true;
+			if (iterate(mutation.addedNodes, selector, forEachAddedNode)) nodesAdded = true;
+			if (iterate(mutation.removedNodes, selector, forEachRemovedNode)) nodesRemoved = true;
 		}
 		cleanup?.({ nodesAdded, nodesRemoved });
 	});
@@ -1286,43 +1070,30 @@ function observeIt({
 	};
 }
 
-;// file://./src/betterbw/features/globalActions.tsx
+const { useState, useEffect, useRef } = window.preactHooks;
+
+// file://./src/betterbw/features/globalActions.tsx
 
 const ALGO_DESCRIPTIONS = {
 	top: { label: "Top", description: "Prioritize users you liked more" },
-	new: {
-		label: "New",
-		description: "Prioritize users you haven't liked/disliked before",
-	},
+	new: { label: "New", description: "Prioritize users you haven't liked/disliked before" },
 };
 async function runAlgo(preferredAlgo) {
 	setAlgo(preferredAlgo);
-	openCandidates(
-		await getCandidates(
-			topRandom,
-			"new" === preferredAlgo ? { undefined: 9, "+": 8 } : {},
-		),
-	);
+	openCandidates(await getCandidates(topRandom, "new" === preferredAlgo ? { undefined: 9, "+": 8 } : {}));
 }
 const clickOnCurrentAlgoButton = debounce(() => {
 	const algo = getAlgo();
 	if ("new" === algo || "top" === algo) runAlgo(algo);
 	else organizePanels();
 });
-const ResetLayoutButton = () =>
-	preact.h(
-		"button",
-		{ title: "Reset the cams' grid layout", onClick: organizePanels },
-		"▦",
-	);
+const ResetLayoutButton = () => h("button", { title: "Reset the cams' grid layout", onClick: organizePanels }, "▦");
 const PlayPauseButton = () => {
-	const [playing, setPlaying] = preactHooks.useState(true);
-	return preact.h(
+	const [playing, setPlaying] = useState(true);
+	return h(
 		"button",
 		{
-			title: playing
-				? "Stop opening cams automatically"
-				: "Start opening cams automatically",
+			title: playing ? "Stop opening cams automatically" : "Start opening cams automatically",
 			onClick: async () => {
 				if (playing) {
 					setAlgo("");
@@ -1338,8 +1109,8 @@ const PlayPauseButton = () => {
 	);
 };
 const NumberOfCams = () => {
-	const [value, setValue] = preactHooks.useState(() => GM_getValue("user.webcamMax", 10));
-	preactHooks.useEffect(() => {
+	const [value, setValue] = useState(() => GM_getValue("user.webcamMax", 10));
+	useEffect(() => {
 		const maxWebcamreached = chatHTML5.maxWebcamreached;
 		chatHTML5.maxWebcamreached = function () {
 			if (!maxWebcamreached()) return false;
@@ -1358,13 +1129,13 @@ const NumberOfCams = () => {
 			revoke();
 		};
 	}, []);
-	preactHooks.useEffect(() => {
+	useEffect(() => {
 		clickOnCurrentAlgoButton();
 	}, [value]);
-	return preact.h(
+	return h(
 		"label",
 		null,
-		preact.h("input", {
+		h("input", {
 			title: "# of open cams",
 			type: "number",
 			className: "numberOfCams",
@@ -1376,15 +1147,12 @@ const NumberOfCams = () => {
 	);
 };
 
-;// file://./src/betterbw/features/watchingMe.ts
+// file://./src/betterbw/features/watchingMe.ts
 
 function markPanelsWatchingMe() {
 	for (const panel of queryPanels()) {
 		const id = getUserId(panel);
-		panel.classList.toggle(
-			"watchingMe",
-			Boolean(id && id in chatHTML5.watchingAtMe),
-		);
+		panel.classList.toggle("watchingMe", Boolean(id && id in chatHTML5.watchingAtMe));
 	}
 }
 async function notifyWatching(user) {
@@ -1396,10 +1164,7 @@ async function notifyWatching(user) {
 	if ("plusplus" === mode && "++" !== status) return;
 	if ("liked" === mode && "+" !== status && "++" !== status) return;
 	const label = `<span class="userLabelBBW" data-username="${escapeHtml(username)}">${escapeHtml(username)}</span>`;
-	chatHTML5.serverMessageCurrentTab(
-		`👁 ${label} started watching you`,
-		"bbw-watch-notice",
-	);
+	chatHTML5.serverMessageCurrentTab(`👁 ${label} started watching you`, "bbw-watch-notice");
 }
 function setupWatchingMe() {
 	const notified = new Set();
@@ -1416,7 +1181,7 @@ function setupWatchingMe() {
 	});
 }
 
-;// file://./src/betterbw/features/camCleanup.ts
+// file://./src/betterbw/features/camCleanup.ts
 
 const recentlyStopped = new Set();
 function markStopped(id) {
@@ -1427,26 +1192,18 @@ function detach(media) {
 	media.pause();
 	media.srcObject = null;
 }
-const cc_hasPanel = id =>
-	Array.from(queryPanels()).some(panel => getUserId(panel) === id);
+const cc_hasPanel = id => Array.from(queryPanels()).some(panel => getUserId(panel) === id);
 function stopWatching(id, why) {
 	if (recentlyStopped.has(id)) return;
 	chatHTML5.socket.emit("watch", chatHTML5.myUser.id, id, false);
 	try {
 		chatHTML5.removeWebcam(id, "bbw-cleanup");
-	} catch (error) {
-		console.warn("[BBW] Could not stop the stream of", id, error);
-	}
-	console.info(
-		`[BBW] Stopped the stream of ${chatHTML5.users[id]?.username ?? id} (${why})`,
-	);
+	} catch (error) {}
 }
 function getMediaUserId(media) {
 	const [, prefix, id] = media.id.match(/^(video_|remotevideo)(\d+)$/) ?? [];
 	if (!id || "video_" === prefix) return id;
-	const user = Object.values(chatHTML5.users).find(
-		user => String(user.streamid ?? user.id) === id,
-	);
+	const user = Object.values(chatHTML5.users).find(user => String(user.streamid ?? user.id) === id);
 	return user ? String(user.id) : id;
 }
 function setupCamCleanup() {
@@ -1471,7 +1228,7 @@ function cleanupClosedCam(panel) {
 	if (id && !cc_hasPanel(id)) stopWatching(id, "its panel closed");
 }
 
-;// file://./src/betterbw/styles/camsMoveAway.css?raw
+// file://./src/betterbw/styles/camsMoveAway.css?raw
 const cma_css = `
 .jsPanel {
 	translate: var(--bbw-peek-x, 0px) var(--bbw-peek-y, 0px);
@@ -1479,21 +1236,27 @@ const cma_css = `
 .jsPanel:is(.ui-draggable-dragging, .bbw-dragging) {
 	translate: none;
 }
+.jsPanel.bbw-peeking {
+	z-index: 99 !important;
+}
 `;
 
-;// file://./src/betterbw/features/camsMoveAway.ts
+// file://./src/betterbw/features/camsMoveAway.ts
 
-const rectOf = (left, top, right, bottom) =>
-	new DOMRect(left, top, right - left, bottom - top);
-const contains = (rect, x, y) =>
-	x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
-const panelRects = () =>
-	Array.from(queryPanels(), panel => [panel, panel.getBoundingClientRect()]);
+const rectOf = (left, top, right, bottom) => new DOMRect(left, top, right - left, bottom - top);
+const contains = (rect, x, y) => x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
+const panelRects = () => Array.from(queryPanels(), panel => [panel, panel.getBoundingClientRect()]);
+const PEEKING_CLASS = "bbw-peeking";
+function startPanel(panel, property, shift) {
+	panel.style.setProperty(property, `${shift}px`);
+	panel.classList.add(PEEKING_CLASS);
+}
 function endPeek(peek, instant) {
 	if (!peek) return null;
 	for (const panel of peek.panels) {
 		if (instant) panel.style.transition = "none";
 		panel.style.removeProperty(peek.property);
+		panel.classList.remove(PEEKING_CLASS);
 	}
 	if (instant && peek.panels[0]) {
 		peek.panels[0].offsetHeight;
@@ -1504,78 +1267,41 @@ function endPeek(peek, instant) {
 const sides = [
 	{
 		zone: function tabsZone() {
-			const chat = document
-				.getElementById("tabsAndFooter")
-				?.getBoundingClientRect();
+			const chat = document.getElementById("tabsAndFooter")?.getBoundingClientRect();
 			if (!chat?.width) return null;
-			const tabs = document
-				.querySelector("#tabs .nav-tabs:not(.nav-tabs-clone)")
-				?.getBoundingClientRect();
+			const tabs = document.querySelector("#tabs .nav-tabs:not(.nav-tabs-clone)")?.getBoundingClientRect();
 			return rectOf(chat.left, 0, chat.right, tabs?.bottom || 65);
 		},
 		start: function startTabsPeek(zone) {
-			const columns = panelRects().filter(
-				([, rect]) => rect.left < zone.right && rect.right > zone.left,
-			);
-			const covering = columns.filter(([, rect]) => rect.top < zone.bottom);
+			const covering = panelRects().filter(([, rect]) => rect.left < zone.right && rect.right > zone.left && rect.top < zone.bottom);
 			if (!covering.length) return null;
-			const shift =
-				Math.max(...covering.map(([, rect]) => zone.bottom - rect.top)) + 4;
-			for (const [panel] of columns)
-				panel.style.setProperty("--bbw-peek-y", `${shift}px`);
-			const left = Math.min(zone.left, ...columns.map(([, rect]) => rect.left));
-			const right = Math.max(
-				zone.right,
-				...columns.map(([, rect]) => rect.right),
-			);
-			return {
-				panels: columns.map(([panel]) => panel),
-				property: "--bbw-peek-y",
-				hold: rectOf(left, zone.top, right, zone.bottom + shift),
-			};
+			const shift = Math.max(...covering.map(([, rect]) => zone.bottom - rect.top)) + 4;
+			for (const [panel] of covering) startPanel(panel, "--bbw-peek-y", shift);
+			const left = Math.min(zone.left, ...covering.map(([, rect]) => rect.left));
+			const right = Math.max(zone.right, ...covering.map(([, rect]) => rect.right));
+			return { panels: covering.map(([panel]) => panel), property: "--bbw-peek-y", hold: rectOf(left, zone.top, right, zone.bottom + shift) };
 		},
 		peek: null,
 		timer: null,
 	},
 	{
 		zone: function sidebarZone() {
-			const sidebar = document
-				.getElementById("usersContainer")
-				?.getBoundingClientRect();
+			const sidebar = document.getElementById("usersContainer")?.getBoundingClientRect();
 			return sidebar?.width ? sidebar : null;
 		},
 		start: function startSidebarPeek(zone) {
-			const covering = panelRects().filter(
-				([, rect]) =>
-					rect.left < zone.right
-					&& rect.right > zone.left
-					&& rect.top < zone.bottom
-					&& rect.bottom > zone.top,
-			);
+			const covering = panelRects().filter(([, rect]) => rect.left < zone.right && rect.right > zone.left && rect.top < zone.bottom && rect.bottom > zone.top);
 			if (!covering.length) return null;
 			const hugsRight = zone.left > innerWidth - zone.right;
-			const needed = Math.max(
-				...covering.map(([, rect]) =>
-					hugsRight ? rect.right - zone.left : zone.right - rect.left,
-				),
-			);
+			const needed = Math.max(...covering.map(([, rect]) => (hugsRight ? rect.right - zone.left : zone.right - rect.left)));
 			const shift = (hugsRight ? -1 : 1) * (needed + 4);
-			for (const [panel] of covering)
-				panel.style.setProperty("--bbw-peek-x", `${shift}px`);
+			for (const [panel] of covering) startPanel(panel, "--bbw-peek-x", shift);
 			const top = Math.min(zone.top, ...covering.map(([, rect]) => rect.top));
-			const bottom = Math.max(
-				zone.bottom,
-				...covering.map(([, rect]) => rect.bottom),
-			);
+			const bottom = Math.max(zone.bottom, ...covering.map(([, rect]) => rect.bottom));
 			return {
 				panels: covering.map(([panel]) => panel),
 				property: "--bbw-peek-x",
-				hold: rectOf(
-					Math.min(zone.left, zone.left + shift),
-					top,
-					Math.max(zone.right, zone.right + shift),
-					bottom,
-				),
+				hold: rectOf(Math.min(zone.left, zone.left + shift), top, Math.max(zone.right, zone.right + shift), bottom),
 			};
 		},
 		peek: null,
@@ -1601,13 +1327,7 @@ const readyIn = zone => !onPanel && contains(zone, pointerX, pointerY);
 function cma_step(side) {
 	if (side.peek) {
 		let peek;
-		if (
-			!(
-				contains((peek = side.peek).hold, pointerX, pointerY)
-				|| (!!onPanel && peek.panels.includes(onPanel))
-			)
-		)
-			side.peek = endPeek(side.peek, false);
+		if (!(contains((peek = side.peek).hold, pointerX, pointerY) || (!!onPanel && peek.panels.includes(onPanel)))) side.peek = endPeek(side.peek, false);
 		return;
 	}
 	const zone = side.zone();
@@ -1627,15 +1347,18 @@ function onMouseMove(event) {
 	if (event.buttons) return;
 	pointerX = event.clientX;
 	pointerY = event.clientY;
-	onPanel =
-		event.target instanceof Element
-			? event.target.closest(PANEL_SELECTOR)
-			: null;
+	onPanel = event.target instanceof Element ? event.target.closest(PANEL_SELECTOR) : null;
 	if (!cma_frame) cma_frame = requestAnimationFrame(update);
 }
 function onPointerDown(event) {
+	let target;
 	for (const side of sides) cancelDwell(side);
-	if (event.target instanceof Element && event.target.closest(PANEL_SELECTOR))
+	if (
+		0 === event.button
+		&& event.target instanceof Element
+		&& !!(target = event.target).closest(".jsPanel-hdr")
+		&& !target.closest("button, input, a, .jsPanel-btn, .userAvatar")
+	)
 		endPeeks(true);
 }
 function refreshCamsMoveAway() {
@@ -1646,16 +1369,13 @@ function setupCamsMoveAway() {
 	GM.addStyle(cma_css);
 	refreshCamsMoveAway();
 	document.addEventListener("pointerdown", onPointerDown, true);
-	document.addEventListener("mousemove", onMouseMove, {
-		capture: true,
-		passive: true,
-	});
+	document.addEventListener("mousemove", onMouseMove, { capture: true, passive: true });
 	document.documentElement.addEventListener("mouseleave", () => endPeeks());
 	addEventListener("blur", () => endPeeks());
 	addEventListener("resize", () => endPeeks());
 }
 
-;// file://./src/betterbw/features/observeOpenPanels.ts
+// file://./src/betterbw/features/observeOpenPanels.ts
 
 let oop_nextUser = null;
 const setNextCam = val => (oop_nextUser = val);
@@ -1689,25 +1409,20 @@ function observePanels() {
 	});
 }
 
-;// file://./src/betterbw/features/discovery.tsx
+// file://./src/betterbw/features/discovery.tsx
 
 const SEEN_KEY = "discovery.headerControlsMoved";
 function HeaderControlsDiscovery() {
-	const [seen, setSeen] = preactHooks.useState(() => GM_getValue(SEEN_KEY, false));
+	const [seen, setSeen] = useState(() => GM_getValue(SEEN_KEY, false));
 	if (seen) return null;
 	const dismiss = () => {
 		GM.setValue(SEEN_KEY, true);
 		setSeen(true);
 	};
-	return preact.h(
-		"div",
-		{ class: "bbw-discovery", onClick: dismiss },
-		"Better BW's controls moved here",
-		preact.h("button", { onClick: dismiss }, "Got it"),
-	);
+	return h("div", { class: "bbw-discovery", onClick: dismiss }, "Better BW's controls moved here", h("button", { onClick: dismiss }, "Got it"));
 }
 
-;// file://./src/betterbw/features/spyOnConfig.ts
+// file://./src/betterbw/features/spyOnConfig.ts
 
 function spyOnConfig(watchers = {}) {
 	const { proxy, revoke } = spyOn(chatHTML5.config, watchers);
@@ -1715,38 +1430,15 @@ function spyOnConfig(watchers = {}) {
 	return { proxy, revoke, watchers };
 }
 
-;// file://./src/betterbw/features/watchStats.ts
+// file://./src/betterbw/features/watchStats.ts
 
 const STORAGE_KEY = "stats.watchingMe";
 const PEAK_KEYS = ["watchers", "onCam", "mutual", "roomShare", "camsShare"];
-const emptyPeaks = () =>
-	Object.fromEntries(PEAK_KEYS.map(key => [key, { value: 0, at: 0 }]));
-const emptyUnsaved = () => ({
-	watchedMs: 0,
-	watcherMs: 0,
-	sessions: 0,
-	regulars: {},
-	watchTime: {},
-});
-const emptyEver = () => ({
-	...emptyUnsaved(),
-	peaks: emptyPeaks(),
-	since: Date.now(),
-});
-let ws_now = {
-	watchers: 0,
-	onCam: 0,
-	mutual: 0,
-	roomShare: 0,
-	camsShare: 0,
-	names: [],
-};
-const ws_session = {
-	watchedMs: 0,
-	watcherMs: 0,
-	peaks: emptyPeaks(),
-	watchers: new Set(),
-};
+const emptyPeaks = () => Object.fromEntries(PEAK_KEYS.map(key => [key, { value: 0, at: 0 }]));
+const emptyUnsaved = () => ({ watchedMs: 0, watcherMs: 0, sessions: 0, regulars: {}, watchTime: {} });
+const emptyEver = () => ({ ...emptyUnsaved(), peaks: emptyPeaks(), since: Date.now() });
+let ws_now = { watchers: 0, onCam: 0, mutual: 0, roomShare: 0, camsShare: 0, names: [] };
+const ws_session = { watchedMs: 0, watcherMs: 0, peaks: emptyPeaks(), watchers: new Set() };
 let ws_ever = emptyEver();
 let unsaved = emptyUnsaved();
 let ws_dirty = false;
@@ -1765,43 +1457,21 @@ const isTransmitting = () => true === chatHTML5.myUser.webcam;
 function isMainTabActive() {
 	const tab = document.querySelector('[data-label="Bateworld"]');
 	if (!tab) return false;
-	return (
-		tab.matches('.active, [aria-selected="true"]')
-		|| Boolean(tab.parentElement?.matches("li.active"))
-	);
+	return tab.matches('.active, [aria-selected="true"]') || Boolean(tab.parentElement?.matches("li.active"));
 }
 function takeSnapshot() {
 	const me = String(chatHTML5.myUser.id);
 	const userById = id => chatHTML5.users[id] ?? chatHTML5.watchingAtMe[id];
-	const watcherIds = Object.keys(chatHTML5.watchingAtMe).filter(
-		id => id !== me,
-	);
+	const watcherIds = Object.keys(chatHTML5.watchingAtMe).filter(id => id !== me);
 	const watchers = watcherIds.length;
-	const names = [
-		...new Set(
-			watcherIds
-				.map(id => userById(id)?.username?.split("_")[0])
-				.filter(isDefined),
-		),
-	];
+	const names = [...new Set(watcherIds.map(id => userById(id)?.username?.split("_")[0]).filter(isDefined))];
 	const onCam = watcherIds.filter(id => userById(id)?.webcam).length;
 	const watching = new Set(Array.from(queryPanels(), getUserId));
 	const mutual = watcherIds.filter(id => watching.has(id)).length;
 	const othersOnline =
-		(Number(document.querySelector("#onlineCounter")?.textContent?.trim())
-			|| 0
-			|| document.querySelectorAll("#userList .userItem").length) - 1;
-	const othersOnCam = Object.values(chatHTML5.users).filter(
-		user => user.webcam && String(user.id) !== me,
-	).length;
-	return {
-		watchers,
-		onCam,
-		mutual,
-		roomShare: othersOnline > 0 ? watchers / othersOnline : 0,
-		camsShare: othersOnCam > 0 ? onCam / othersOnCam : 0,
-		names,
-	};
+		(Number(document.querySelector("#onlineCounter")?.textContent?.trim()) || 0 || document.querySelectorAll("#userList .userItem").length) - 1;
+	const othersOnCam = Object.values(chatHTML5.users).filter(user => user.webcam && String(user.id) !== me).length;
+	return { watchers, onCam, mutual, roomShare: othersOnline > 0 ? watchers / othersOnline : 0, camsShare: othersOnCam > 0 ? onCam / othersOnCam : 0, names };
 }
 function record(at) {
 	ws_now = takeSnapshot();
@@ -1832,8 +1502,7 @@ function tick() {
 			totals.watcherMs += ws_now.watchers * (at - lastTickAt);
 		}
 		for (const name of ws_now.names)
-			for (const watchTime of [ws_ever.watchTime, unsaved.watchTime])
-				watchTime[name] = (watchTime[name] ?? 0) + (at - lastTickAt);
+			for (const watchTime of [ws_ever.watchTime, unsaved.watchTime]) watchTime[name] = (watchTime[name] ?? 0) + (at - lastTickAt);
 		ws_dirty = true;
 	}
 	lastTickAt = at;
@@ -1849,19 +1518,13 @@ async function load() {
 }
 function addCounts(base, pending) {
 	const sum = { ...base };
-	for (const [name, count] of Object.entries(pending))
-		sum[name] = (sum[name] ?? 0) + count;
+	for (const [name, count] of Object.entries(pending)) sum[name] = (sum[name] ?? 0) + count;
 	return sum;
 }
 function merge(base, pending, peaks) {
 	return {
 		since: base.since,
-		peaks: Object.fromEntries(
-			PEAK_KEYS.map(key => [
-				key,
-				peaks[key].value > base.peaks[key].value ? peaks[key] : base.peaks[key],
-			]),
-		),
+		peaks: Object.fromEntries(PEAK_KEYS.map(key => [key, peaks[key].value > base.peaks[key].value ? peaks[key] : base.peaks[key]])),
 		watchedMs: base.watchedMs + pending.watchedMs,
 		watcherMs: base.watcherMs + pending.watcherMs,
 		sessions: base.sessions + pending.sessions,
@@ -1889,11 +1552,10 @@ async function trackWatchStats() {
 	});
 }
 
-;// file://./src/betterbw/features/fastUserList.ts
+// file://./src/betterbw/features/fastUserList.ts
 let batching = false;
 let listedRoomId = null;
-const isSelected = id =>
-	document.getElementById(id)?.classList.contains("selected") ?? false;
+const isSelected = id => document.getElementById(id)?.classList.contains("selected") ?? false;
 function sortUserList() {
 	if (isSelected("sortWatchersBtn")) return chatHTML5.sortWatchersNumber();
 	const byRole = isSelected("sortRoleBtn");
@@ -1908,13 +1570,7 @@ function sortUserList() {
 			flag(b, "showtop") - flag(a, "showtop")
 			|| (byRole ? Number(b.dataset.power) - Number(a.dataset.power) : 0)
 			|| (byWebcam ? flag(b, "webcam") - flag(a, "webcam") : 0)
-			|| (byName
-				? (a.dataset.username ?? "").localeCompare(
-						b.dataset.username ?? "",
-						void 0,
-						{ sensitivity: "base" },
-					)
-				: 0),
+			|| (byName ? (a.dataset.username ?? "").localeCompare(b.dataset.username ?? "", void 0, { sensitivity: "base" }) : 0),
 	);
 	list.append(...items);
 }
@@ -1945,8 +1601,7 @@ function skipRedundantUserListRefresh() {
 		listedRoomId = String(roomid);
 	});
 	$(document).on("tabChanged", (_event, changedTab) => {
-		if (changedTab?.room === false && "1" === chatHTML5.config.multiRoomEnter)
-			listedRoomId = null;
+		if (changedTab?.room === false && "1" === chatHTML5.config.multiRoomEnter) listedRoomId = null;
 	});
 	const emit = socket.emit;
 	socket.emit = function (event, ...args) {
@@ -1955,17 +1610,12 @@ function skipRedundantUserListRefresh() {
 	};
 }
 
-;// file://./src/betterbw/features/watchStatsDisplay.tsx
+// file://./src/betterbw/features/watchStatsDisplay.tsx
 
 const wsd_int = n => Math.round(n).toLocaleString();
 const pct = n => `${Math.round(100 * n)}%`;
-const average = ({ watchedMs, watcherMs }) =>
-	watchedMs ? (watcherMs / watchedMs).toFixed(1) : "–";
-const wsd_date = at =>
-	new Date(at).toLocaleString(void 0, {
-		dateStyle: "medium",
-		timeStyle: "short",
-	});
+const average = ({ watchedMs, watcherMs }) => (watchedMs ? (watcherMs / watchedMs).toFixed(1) : "–");
+const wsd_date = at => new Date(at).toLocaleString(void 0, { dateStyle: "medium", timeStyle: "short" });
 function duration(ms) {
 	const minutes = Math.floor(ms / 60000);
 	if (minutes < 1) return `${Math.floor(ms / 1000)}s`;
@@ -1992,131 +1642,75 @@ function StatsCard({ anchor }) {
 		.filter(([, ms]) => ms >= 60000)
 		.sort(([, a], [, b]) => b - a)
 		.slice(0, 5);
-	return preact.h(
+	return h(
 		"div",
 		{ class: "bbw-watch-card", style: style },
-		preact.h(
+		h(
 			"table",
 			null,
-			preact.h(
-				"thead",
-				null,
-				preact.h(
-					"tr",
-					null,
-					preact.h("th", null),
-					preact.h("th", null, "Now"),
-					preact.h("th", null, "Session"),
-					preact.h("th", null, "Ever"),
-				),
-			),
-			preact.h(
+			h("thead", null, h("tr", null, h("th", null), h("th", null, "Now"), h("th", null, "Session"), h("th", null, "Ever"))),
+			h(
 				"tbody",
 				null,
 				PEAK_ROWS.map(([key, label, format]) =>
-					preact.h(
+					h(
 						"tr",
 						{ key: key },
-						preact.h("th", null, label),
-						preact.h("td", null, paused ? "–" : format(now[key])),
-						preact.h("td", null, format(session.peaks[key].value)),
-						preact.h("td", null, format(ever.peaks[key].value)),
+						h("th", null, label),
+						h("td", null, paused ? "–" : format(now[key])),
+						h("td", null, format(session.peaks[key].value)),
+						h("td", null, format(ever.peaks[key].value)),
 					),
 				),
-				preact.h(
+				h(
 					"tr",
 					{ class: "bbw-separator" },
-					preact.h("th", null, "Unique watchers"),
-					preact.h("td", null),
-					preact.h("td", null, wsd_int(session.watchers.size)),
-					preact.h("td", null, wsd_int(Object.keys(ever.regulars).length)),
+					h("th", null, "Unique watchers"),
+					h("td", null),
+					h("td", null, wsd_int(session.watchers.size)),
+					h("td", null, wsd_int(Object.keys(ever.regulars).length)),
 				),
-				preact.h(
-					"tr",
-					null,
-					preact.h("th", null, "Watched for"),
-					preact.h("td", null),
-					preact.h("td", null, duration(session.watchedMs)),
-					preact.h("td", null, duration(ever.watchedMs)),
-				),
-				preact.h(
-					"tr",
-					null,
-					preact.h("th", null, "Average watchers"),
-					preact.h("td", null),
-					preact.h("td", null, average(session)),
-					preact.h("td", null, average(ever)),
-				),
+				h("tr", null, h("th", null, "Watched for"), h("td", null), h("td", null, duration(session.watchedMs)), h("td", null, duration(ever.watchedMs))),
+				h("tr", null, h("th", null, "Average watchers"), h("td", null), h("td", null, average(session)), h("td", null, average(ever))),
 			),
 		),
-		paused
-			&& preact.h(
-				"p",
-				null,
-				preact.h("b", null, "Paused:"),
-				" only counted while the Bateworld tab is open",
-			),
-		preact.h(
-			"p",
-			{ class: "bbw-muted" },
-			"Top rows: the most at once. Averages count only the time someone was watching.",
-		),
+		paused && h("p", null, h("b", null, "Paused:"), " only counted while the Bateworld tab is open"),
+		h("p", { class: "bbw-muted" }, "Top rows: the most at once. Averages count only the time someone was watching."),
 		ever.peaks.watchers.at > 0
-			&& preact.h(
+			&& h(
 				"p",
 				null,
 				"Record: ",
-				preact.h("b", null, wsd_int(ever.peaks.watchers.value)),
+				h("b", null, wsd_int(ever.peaks.watchers.value)),
 				" watchers, on ",
 				wsd_date(ever.peaks.watchers.at),
 			),
 		regulars.length > 0
-			&& preact.h(
-				"p",
-				null,
-				"Regulars: ",
-				regulars
-					.map(
-						([name, ms]) =>
-							`${name} (${duration(ms)}, ${wsd_int(ever.regulars[name] ?? 1)}×)`,
-					)
-					.join(", "),
-			),
-		preact.h(
-			"p",
-			{ class: "bbw-muted" },
-			"Watched in ",
-			wsd_int(ever.sessions),
-			" sessions since ",
-			wsd_date(ever.since),
-		),
+			&& h("p", null, "Regulars: ", regulars.map(([name, ms]) => `${name} (${duration(ms)}, ${wsd_int(ever.regulars[name] ?? 1)}×)`).join(", ")),
+		h("p", { class: "bbw-muted" }, "Watched in ", wsd_int(ever.sessions), " sessions since ", wsd_date(ever.since)),
 	);
 }
 function WatchStats() {
-	const [, setVersion] = preactHooks.useState(0);
-	preactHooks.useEffect(() => subscribeWatchStats(() => setVersion(v => v + 1)), []);
-	const [anchor, setAnchor] = preactHooks.useState(null);
+	const [, setVersion] = useState(0);
+	useEffect(() => subscribeWatchStats(() => setVersion(v => v + 1)), []);
+	const [anchor, setAnchor] = useState(null);
 	const { session, ever } = getWatchStats();
 	const showSession = isTransmitting() || session.peaks.watchers.value > 0;
-	return preact.h(
+	return h(
 		"span",
-		{
-			class: "bbw-watch-stats",
-			onMouseEnter: e => setAnchor(e.currentTarget.getBoundingClientRect()),
-			onMouseLeave: () => setAnchor(null),
-		},
-		preact.h(
+		{ class: "bbw-watch-stats", onMouseEnter: e => setAnchor(e.currentTarget.getBoundingClientRect()), onMouseLeave: () => setAnchor(null) },
+		h(
 			"span",
 			{ class: "bbw-watch-summary" },
 			"max ",
 			wsd_int(ever.peaks.watchers.value),
 			showSession && ` · session ${wsd_int(session.peaks.watchers.value)}`,
 		),
-		anchor && preact.h(StatsCard, { anchor: anchor }),
+		anchor && h(StatsCard, { anchor: anchor }),
 	);
 }
 
-;// file://./src/betterbw/features/settingsMenu.tsx
+// file://./src/betterbw/features/settingsMenu.tsx
 
 const NOTIFICATIONS = [
 	["off", "Off"],
@@ -2125,34 +1719,29 @@ const NOTIFICATIONS = [
 	["all", "Everyone (except --)"],
 ];
 const GROUPS = [...new Set(SITE_OPTIONS.map(option => option.group))];
-const START_MUTED_OPTION = SITE_OPTIONS.find(
-	option => "soundMutedAtStart" === option.key,
-);
+const START_MUTED_OPTION = SITE_OPTIONS.find(option => "soundMutedAtStart" === option.key);
 function SiteOptionInput({ option, onChange }) {
 	const value = String(chatHTML5.config[option.key] ?? "");
 	if ("number" === option.type)
-		return preact.h(
+		return h(
 			"label",
 			null,
 			option.label,
-			preact.h("input", {
+			h("input", {
 				type: "number",
 				min: "0",
 				value: value || "0",
 				onChange: e => {
-					setSiteOption(
-						option.key,
-						String(Math.max(0, parseInt(e.currentTarget.value) || 0)),
-					);
+					setSiteOption(option.key, String(Math.max(0, parseInt(e.currentTarget.value) || 0)));
 					onChange();
 				},
 			}),
 			option.unit,
 		);
-	return preact.h(
+	return h(
 		"label",
 		null,
-		preact.h("input", {
+		h("input", {
 			type: "checkbox",
 			checked: "1" === value,
 			onChange: e => {
@@ -2164,23 +1753,18 @@ function SiteOptionInput({ option, onChange }) {
 	);
 }
 function VolumePercentInput() {
-	const [percent, setPercent] = preactHooks.useState(() =>
-		Math.round(100 * getSetting("defaultVolume")),
-	);
-	return preact.h(
+	const [percent, setPercent] = useState(() => Math.round(100 * getSetting("defaultVolume")));
+	return h(
 		"label",
 		null,
 		"Default volume for new cams",
-		preact.h("input", {
+		h("input", {
 			type: "number",
 			min: "0",
 			max: "100",
 			value: percent,
 			onChange: e => {
-				const value = Math.min(
-					100,
-					Math.max(0, parseInt(e.currentTarget.value) || 0),
-				);
+				const value = Math.min(100, Math.max(0, parseInt(e.currentTarget.value) || 0));
 				setPercent(value);
 				setSetting("defaultVolume", value / 100);
 			},
@@ -2189,14 +1773,14 @@ function VolumePercentInput() {
 	);
 }
 function ToggleSetting({ setting, label, explain, onChange }) {
-	const [checked, setChecked] = preactHooks.useState(() => getSetting(setting));
-	return preact.h(
-		preact.Fragment,
+	const [checked, setChecked] = useState(() => getSetting(setting));
+	return h(
+		Fragment,
 		null,
-		preact.h(
+		h(
 			"label",
 			null,
-			preact.h("input", {
+			h("input", {
 				type: "checkbox",
 				checked: checked,
 				onChange: async e => {
@@ -2208,25 +1792,16 @@ function ToggleSetting({ setting, label, explain, onChange }) {
 			}),
 			label,
 		),
-		explain && preact.h("span", { class: "bbw-explain" }, explain),
+		explain && h("span", { class: "bbw-explain" }, explain),
 	);
 }
-function MemoInput({
-	storageKey,
-	prefix,
-	suffix,
-	defaultValue,
-	onChangeEffect,
-	...props
-}) {
-	const [value, setValue] = preactHooks.useState(() =>
-		GM_getValue(storageKey, defaultValue),
-	);
-	return preact.h(
+function MemoInput({ storageKey, prefix, suffix, defaultValue, onChangeEffect, ...props }) {
+	const [value, setValue] = useState(() => GM_getValue(storageKey, defaultValue));
+	return h(
 		"label",
 		null,
 		prefix,
-		preact.h("input", {
+		h("input", {
 			...props,
 			value: value,
 			onChange: e => {
@@ -2240,11 +1815,11 @@ function MemoInput({
 	);
 }
 function PanelSizeInput() {
-	return preact.h(
+	return h(
 		"label",
 		{ class: "bbw-stacked" },
 		"Max size of the panel",
-		preact.h(MemoInput, {
+		h(MemoInput, {
 			storageKey: "config.webcamWidth",
 			type: "number",
 			className: "numberOfCams",
@@ -2258,20 +1833,16 @@ function PanelSizeInput() {
 				clickOnCurrentAlgoButton();
 			},
 		}),
-		preact.h(
-			"span",
-			{ class: "bbw-explain" },
-			"Shrinks automatically when the cams don't fit the screen",
-		),
+		h("span", { class: "bbw-explain" }, "Shrinks automatically when the cams don't fit the screen"),
 	);
 }
 function AlgoSelect() {
-	const [value, setValue] = preactHooks.useState(() => getSetting("preferredAlgo"));
-	return preact.h(
+	const [value, setValue] = useState(() => getSetting("preferredAlgo"));
+	return h(
 		"label",
 		{ class: "bbw-stacked" },
 		"Which cams to prioritize",
-		preact.h(
+		h(
 			"select",
 			{
 				value: value,
@@ -2282,31 +1853,21 @@ function AlgoSelect() {
 					if ("" !== getAlgo()) runAlgo(next);
 				},
 			},
-			Object.keys(ALGO_DESCRIPTIONS).map(key =>
-				preact.h(
-					"option",
-					{ key: key, value: key },
-					ALGO_DESCRIPTIONS[key].label,
-				),
-			),
+			Object.keys(ALGO_DESCRIPTIONS).map(key => h("option", { key: key, value: key }, ALGO_DESCRIPTIONS[key].label)),
 		),
-		preact.h(
-			"span",
-			{ class: "bbw-explain" },
-			ALGO_DESCRIPTIONS[value].description,
-		),
+		h("span", { class: "bbw-explain" }, ALGO_DESCRIPTIONS[value].description),
 	);
 }
 function ClassicWidthInput() {
-	const [width, setWidth] = preactHooks.useState(() => getSetting("classicWidth"));
-	return preact.h(
+	const [width, setWidth] = useState(() => getSetting("classicWidth"));
+	return h(
 		"label",
 		{ class: "bbw-stacked" },
 		"Exact size of the panel",
-		preact.h(
+		h(
 			"span",
 			null,
-			preact.h("input", {
+			h("input", {
 				type: "number",
 				min: "150",
 				step: "5",
@@ -2321,20 +1882,16 @@ function ClassicWidthInput() {
 			" ",
 			"px",
 		),
-		preact.h(
-			"span",
-			{ class: "bbw-explain" },
-			"Every cam is exactly this wide, whatever the size of the window",
-		),
+		h("span", { class: "bbw-explain" }, "Every cam is exactly this wide, whatever the size of the window"),
 	);
 }
 function RowsSelect() {
-	const [rows, setRows] = preactHooks.useState(() => getSetting("adaptableRows"));
-	return preact.h(
+	const [rows, setRows] = useState(() => getSetting("adaptableRows"));
+	return h(
 		"label",
 		{ class: "bbw-stacked" },
 		"Rows",
-		preact.h(
+		h(
 			"select",
 			{
 				value: rows,
@@ -2345,46 +1902,35 @@ function RowsSelect() {
 					organizePanels();
 				},
 			},
-			Array.from({ length: MAX_ROWS }, (_, i) => i + 1).map(n =>
-				preact.h("option", { key: n, value: n }, n),
-			),
+			Array.from({ length: MAX_ROWS }, (_, i) => i + 1).map(n => h("option", { key: n, value: n }, n)),
 		),
-		preact.h(
-			"span",
-			{ class: "bbw-explain" },
-			"The cams grow or shrink so this many rows fill the window's height",
-		),
+		h("span", { class: "bbw-explain" }, "The cams grow or shrink so this many rows fill the window's height"),
 	);
 }
 function LayoutOptions({ layout }) {
-	if ("classic" === layout) return preact.h(ClassicWidthInput, null);
-	return preact.h(
-		preact.Fragment,
-		null,
-		preact.h(RowsSelect, null),
-		preact.h(PanelSizeInput, null),
-	);
+	if ("classic" === layout) return h(ClassicWidthInput, null);
+	return h(Fragment, null, h(RowsSelect, null), h(PanelSizeInput, null));
 }
 function LayoutSettings() {
-	const [applied, setApplied] = preactHooks.useState(() => getSetting("layout"));
-	const [selected, setSelected] = preactHooks.useState(applied);
+	const [applied, setApplied] = useState(() => getSetting("layout"));
+	const [selected, setSelected] = useState(applied);
 	const dirty = selected !== applied;
-	return preact.h(
+	return h(
 		"div",
 		null,
-		preact.h(
+		h(
 			"div",
 			{ class: `bbw-stacked bbw-layout-picker${dirty ? " bbw-dirty" : ""}` },
-			preact.h(
+			h(
 				"span",
 				null,
 				"Layout",
 				dirty
-					&& preact.h(
-						preact.Fragment,
+					&& h(
+						Fragment,
 						null,
 						" (current: ",
-						preact.h(
+						h(
 							"a",
 							{
 								href: "#",
@@ -2399,22 +1945,16 @@ function LayoutSettings() {
 						")",
 					),
 			),
-			preact.h(
+			h(
 				"div",
 				{ class: "bbw-layout-row" },
-				preact.h(
+				h(
 					"select",
-					{
-						"aria-label": "Layout",
-						value: selected,
-						onChange: e => setSelected(e.currentTarget.value),
-					},
-					Object.keys(LAYOUT_LABELS).map(name =>
-						preact.h("option", { key: name, value: name }, LAYOUT_LABELS[name]),
-					),
+					{ "aria-label": "Layout", value: selected, onChange: e => setSelected(e.currentTarget.value) },
+					Object.keys(LAYOUT_LABELS).map(name => h("option", { key: name, value: name }, LAYOUT_LABELS[name])),
 				),
 				dirty
-					&& preact.h(
+					&& h(
 						"button",
 						{
 							type: "button",
@@ -2429,38 +1969,30 @@ function LayoutSettings() {
 					),
 			),
 			dirty
-				&& preact.h(
+				&& h(
 					"span",
 					{ class: "bbw-explain" },
 					"Switching layouts rearranges every cam, so it waits for this button. Everything else here saves and applies on its own.",
 				),
 		),
-		preact.h(ToggleSetting, {
+		h(ToggleSetting, {
 			setting: "camsMoveAway",
 			label: "Cams move away",
-			explain:
-				"Rest the pointer on the chat's tabs, or on the buddy list, and the cams in front of them slide out of the way",
+			explain: "Rest the pointer on the chat's tabs, or on the buddy list, and the cams in front of them slide out of the way",
 			onChange: refreshCamsMoveAway,
 		}),
-		preact.h(
+		h(
 			"fieldset",
 			null,
-			preact.h("legend", null, LAYOUT_LABELS[selected]),
-			preact.h(LayoutOptions, { key: selected, layout: selected }),
-			dirty
-				&& preact.h(
-					"p",
-					{ class: "bbw-muted" },
-					"Saved already; used once you apply this layout.",
-				),
+			h("legend", null, LAYOUT_LABELS[selected]),
+			h(LayoutOptions, { key: selected, layout: selected }),
+			dirty && h("p", { class: "bbw-muted" }, "Saved already; used once you apply this layout."),
 		),
 	);
 }
 function SettingsPanel({ anchor }) {
-	const [notifications, setNotifications] = preactHooks.useState(() =>
-		getSetting("watchNotifications"),
-	);
-	const [, setVersion] = preactHooks.useState(0);
+	const [notifications, setNotifications] = useState(() => getSetting("watchNotifications"));
+	const [, setVersion] = useState(0);
 	const rerender = () => setVersion(v => v + 1);
 	const style = {
 		width: "640px",
@@ -2470,21 +2002,21 @@ function SettingsPanel({ anchor }) {
 		top: `${anchor.bottom + 4}px`,
 		left: `max(8px, min(${anchor.left}px, calc(100vw - 648px)))`,
 	};
-	return preact.h(
+	return h(
 		"div",
 		{ class: "bbw-settings-panel", style: style },
-		preact.h("h4", null, "Better BW"),
-		preact.h(
+		h("h4", null, "Better BW"),
+		h(
 			"div",
 			{ class: "bbw-settings-columns" },
-			preact.h(
+			h(
 				"div",
 				null,
-				preact.h(
+				h(
 					"label",
 					{ class: "bbw-stacked" },
 					"Tell me when someone starts watching me",
-					preact.h(
+					h(
 						"select",
 						{
 							value: notifications,
@@ -2494,61 +2026,40 @@ function SettingsPanel({ anchor }) {
 								setSetting("watchNotifications", value);
 							},
 						},
-						NOTIFICATIONS.map(([value, label]) =>
-							preact.h("option", { key: value, value: value }, label),
-						),
+						NOTIFICATIONS.map(([value, label]) => h("option", { key: value, value: value }, label)),
 					),
 				),
 				GROUPS.map(group =>
-					preact.h(
+					h(
 						"fieldset",
 						{ key: group },
-						preact.h("legend", null, group),
-						SITE_OPTIONS.filter(
-							option => option.group === group && option !== START_MUTED_OPTION,
-						).map(option =>
-							preact.h(SiteOptionInput, {
-								key: option.key,
-								option: option,
-								onChange: rerender,
-							}),
+						h("legend", null, group),
+						SITE_OPTIONS.filter(option => option.group === group && option !== START_MUTED_OPTION).map(option =>
+							h(SiteOptionInput, { key: option.key, option: option, onChange: rerender }),
 						),
 						"Cams" === group
-							&& preact.h(
-								preact.Fragment,
+							&& h(
+								Fragment,
 								null,
-								preact.h(AlgoSelect, null),
-								preact.h(VolumePercentInput, null),
-								preact.h(SiteOptionInput, {
-									option: START_MUTED_OPTION,
-									onChange: rerender,
-								}),
-								preact.h(ToggleSetting, {
-									setting: "scrollToVolume",
-									label: "Scroll wheel changes the volume",
-								}),
-								preact.h(ToggleSetting, {
-									setting: "pinchToZoom",
-									label: "Pinch (or Ctrl + scroll) zooms into the cam",
-								}),
+								h(AlgoSelect, null),
+								h(VolumePercentInput, null),
+								h(SiteOptionInput, { option: START_MUTED_OPTION, onChange: rerender }),
+								h(ToggleSetting, { setting: "scrollToVolume", label: "Scroll wheel changes the volume" }),
+								h(ToggleSetting, { setting: "pinchToZoom", label: "Pinch (or Ctrl + scroll) zooms into the cam" }),
 							),
 					),
 				),
-				preact.h(
-					"p",
-					{ class: "bbw-muted" },
-					"The chat's options apply to new messages, buddies and cams.",
-				),
+				h("p", { class: "bbw-muted" }, "The chat's options apply to new messages, buddies and cams."),
 			),
-			preact.h(LayoutSettings, null),
+			h(LayoutSettings, null),
 		),
 	);
 }
 function SettingsMenu() {
-	const [anchor, setAnchor] = preactHooks.useState(null);
-	const [pinned, setPinned] = preactHooks.useState(false);
-	const root = preactHooks.useRef(null);
-	const closeTimer = preactHooks.useRef();
+	const [anchor, setAnchor] = useState(null);
+	const [pinned, setPinned] = useState(false);
+	const root = useRef(null);
+	const closeTimer = useRef();
 	const open = () => {
 		clearTimeout(closeTimer.current);
 		if (root.current) setAnchor(root.current.getBoundingClientRect());
@@ -2558,7 +2069,7 @@ function SettingsMenu() {
 		setAnchor(null);
 		setPinned(false);
 	};
-	preactHooks.useEffect(() => {
+	useEffect(() => {
 		if (!anchor) return;
 		const closeOnEscape = event => {
 			if ("Escape" === event.key) close();
@@ -2566,7 +2077,7 @@ function SettingsMenu() {
 		document.addEventListener("keydown", closeOnEscape);
 		return () => document.removeEventListener("keydown", closeOnEscape);
 	}, [anchor]);
-	preactHooks.useEffect(() => {
+	useEffect(() => {
 		if (!pinned) return;
 		const closeOnOutsideClick = event => {
 			if (!root.current?.contains(event.target)) close();
@@ -2574,7 +2085,7 @@ function SettingsMenu() {
 		document.addEventListener("mousedown", closeOnOutsideClick);
 		return () => document.removeEventListener("mousedown", closeOnOutsideClick);
 	}, [pinned]);
-	return preact.h(
+	return h(
 		"span",
 		{
 			class: "bbw-settings",
@@ -2586,7 +2097,7 @@ function SettingsMenu() {
 				closeTimer.current = setTimeout(() => setAnchor(null), 200);
 			},
 		},
-		preact.h(
+		h(
 			"button",
 			{
 				title: "Better BW settings",
@@ -2600,11 +2111,11 @@ function SettingsMenu() {
 			},
 			"⚙",
 		),
-		anchor && preact.h(SettingsPanel, { anchor: anchor }),
+		anchor && h(SettingsPanel, { anchor: anchor }),
 	);
 }
 
-;// file://./src/betterbw/styles/watchStats.css?raw
+// file://./src/betterbw/styles/watchStats.css?raw
 const ws_css = `
 #bbw_watch_stats {
 	display: block;
@@ -2681,7 +2192,7 @@ const ws_css = `
 }
 `;
 
-;// file://./src/betterbw/styles/settings.css?raw
+// file://./src/betterbw/styles/settings.css?raw
 const settings_css = `
 .bbw-settings-panel {
 	position: fixed;
@@ -2817,7 +2328,7 @@ const settings_css = `
 }
 `;
 
-;// file://./src/betterbw/setupTools.tsx
+// file://./src/betterbw/setupTools.tsx
 
 async function setupHeader() {
 	const avatar = document.getElementById("myAvatar");
@@ -2827,15 +2338,7 @@ async function setupHeader() {
 	avatar.after(controls);
 	GM.addStyle(settings_css);
 	preact.render(
-		preact.h(
-			preact.Fragment,
-			null,
-			preact.h(SettingsMenu, null),
-			preact.h(ResetLayoutButton, null),
-			preact.h(NumberOfCams, null),
-			preact.h(PlayPauseButton, null),
-			preact.h(HeaderControlsDiscovery, null),
-		),
+		h(Fragment, null, h(SettingsMenu, null), h(ResetLayoutButton, null), h(NumberOfCams, null), h(PlayPauseButton, null), h(HeaderControlsDiscovery, null)),
 		controls,
 	);
 }
@@ -2845,16 +2348,14 @@ async function setupUserMenu() {
 	const controls = document.createElement("div");
 	controls.id = "bbw_menu_controls";
 	userMenu.appendChild(controls);
-	preact.render(preact.h(MenuActions, null), controls);
+	preact.render(h(MenuActions, null), controls);
 	chatHTML5.myUser = spyOn(chatHTML5.myUser, {
 		selectedUserid: async selectedUserid => {
 			const nuser = getUserById(selectedUserid);
 			if (!nuser) return;
 			userMenu.dataset.status = await GM.getValue(`${nuser.username}_status`);
 			userMenu.dataset.username = nuser.username;
-			userMenu.dataset.isCooldown = Boolean(
-				await isOnCooldown(nuser.username),
-			).toString();
+			userMenu.dataset.isCooldown = Boolean(await isOnCooldown(nuser.username)).toString();
 			userMenu.dataset.privateCam = Boolean(!nuser.obj.webcamPublic).toString();
 		},
 	}).proxy;
@@ -2892,7 +2393,7 @@ async function setupWatchStats() {
 	const stats = document.createElement("span");
 	stats.id = "bbw_watch_stats";
 	counter.after(stats);
-	preact.render(preact.h(WatchStats, null), stats);
+	preact.render(h(WatchStats, null), stats);
 	await trackWatchStats();
 }
 const ConfigWatchers = {};
@@ -2915,20 +2416,14 @@ async function setupTools() {
 	applySiteOptions();
 	const { revoke } = spyOnConfig(ConfigWatchers);
 	chatHTML5.amIMuted = () => chatHTML5.myUser.mutedUntil > Date.now();
-	await Promise.all([
-		setupHeader(),
-		setupUserMenu(),
-		setupSidebar(),
-		setupWatchStats(),
-	]);
+	await Promise.all([setupHeader(), setupUserMenu(), setupSidebar(), setupWatchStats()]);
 	skipRedundantUserListRefresh();
 	setupWatchingMe();
-	if (!$("#sortWebcamtBtn").hasClass("selected"))
-		$("#sortWebcamtBtn").trigger("click");
+	if (!$("#sortWebcamtBtn").hasClass("selected")) $("#sortWebcamtBtn").trigger("click");
 	return revoke;
 }
 
-;// file://./src/betterbw/features/observeChat.tsx
+// file://./src/betterbw/features/observeChat.tsx
 
 function handleWebcamOpened(message) {
 	const span = $("[data-id]", message)[0];
@@ -2970,14 +2465,10 @@ function handleWhisperOrPrivateMessage(message) {
 	}
 }
 function handlePrivateRequested(message) {
-	const textNode = Array.from(message.childNodes).find(
-		n => 3 === n.nodeType && n.textContent?.trim(),
-	);
+	const textNode = Array.from(message.childNodes).find(n => 3 === n.nodeType && n.textContent?.trim());
 	if (!textNode || !textNode.textContent) return;
 	const textContent = textNode.textContent;
-	const match = textContent.match(
-		/\s*(\S+?)\s+has invited you to watch his cam/,
-	);
+	const match = textContent.match(/\s*(\S+?)\s+has invited you to watch his cam/);
 	if (!match) return;
 	const full_username = match[1];
 	if (!full_username) return;
@@ -2989,9 +2480,7 @@ function handlePrivateRequested(message) {
 	textNode.textContent = textContent.replace(/(^\s*\S+?)(\s+.*$)/, "$2");
 }
 function handleWebcamRequest(message) {
-	const textNode = Array.from(message.childNodes).find(
-		n => 3 === n.nodeType && n.textContent?.trim(),
-	);
+	const textNode = Array.from(message.childNodes).find(n => 3 === n.nodeType && n.textContent?.trim());
 	if (!textNode || !textNode.textContent) return;
 	const textContent = textNode.textContent;
 	const match = textContent.match(/You requested webcam of\s*(\S+)/);
@@ -3013,30 +2502,18 @@ function handleWebcamRequest(message) {
 	}
 }
 function handleChatMessage(message) {
-	if (message.matches(".serverMessage.webcamOpened"))
-		handleWebcamOpened(message);
-	else if (message.matches(".message.msg-box:not(.whisper)"))
-		handleRegularMessage(message);
-	else if (
-		message.matches(".message.addPrivateMessage,.message.msg-box.whisper")
-	)
-		handleWhisperOrPrivateMessage(message);
-	else if (message.matches(".serverMessage.privateRequested"))
-		handlePrivateRequested(message);
-	else if (message.matches(".serverMessage.webcamRequest"))
-		handleWebcamRequest(message);
+	if (message.matches(".serverMessage.webcamOpened")) handleWebcamOpened(message);
+	else if (message.matches(".message.msg-box:not(.whisper)")) handleRegularMessage(message);
+	else if (message.matches(".message.addPrivateMessage,.message.msg-box.whisper")) handleWhisperOrPrivateMessage(message);
+	else if (message.matches(".serverMessage.privateRequested")) handlePrivateRequested(message);
+	else if (message.matches(".serverMessage.webcamRequest")) handleWebcamRequest(message);
 }
 function observeChat(room) {
-	return observeIt({
-		target: room,
-		selector: ".message,.serverMessage",
-		forEachAddedNode: handleChatMessage,
-	});
+	return observeIt({ target: room, selector: ".message,.serverMessage", forEachAddedNode: handleChatMessage });
 }
 function observeChatNav() {
 	const tabContent = $("#tabs .tab-content")[0];
-	if (!tabContent)
-		return console.warn("Chat tabs not found; chat enhancements are disabled");
+	if (!tabContent) return;
 	const tabs = {};
 	return observeIt({
 		target: tabContent,
@@ -3053,7 +2530,7 @@ function observeChatNav() {
 	});
 }
 
-;// file://./src/betterbw/features/responsiveLayout.ts
+// file://./src/betterbw/features/responsiveLayout.ts
 
 const CHAT_WIDTH_KEY = "config.chatWidth";
 function setupResponsiveLayout() {
@@ -3072,18 +2549,13 @@ function setupResponsiveLayout() {
 	}).observe(chat);
 }
 
-;// file://./src/betterbw/features/lighterTimers.ts
+// file://./src/betterbw/features/lighterTimers.ts
 const TIMESTAMPS = "#chatContainer .timeStamp, div.windowChat .timeStamp";
 function displayDateAgo() {
-	const selector =
-		"1" === chatHTML5.config.displayConnectedSince
-			? `${TIMESTAMPS}, #userList .userSince`
-			: TIMESTAMPS;
+	const selector = "1" === chatHTML5.config.displayConnectedSince ? `${TIMESTAMPS}, #userList .userSince` : TIMESTAMPS;
 	for (const element of document.querySelectorAll(selector)) {
 		const date = element.dataset.date;
-		const text = chatHTML5.getDateAgo(
-			date && /^\d+$/.test(date) ? Number(date) : date,
-		);
+		const text = chatHTML5.getDateAgo(date && /^\d+$/.test(date) ? Number(date) : date);
 		if (element.textContent !== text) element.textContent = text;
 	}
 }
@@ -3100,7 +2572,7 @@ function lightenTimers() {
 	});
 }
 
-;// file://./src/betterbw/features/noCamsBeforeRoom.ts
+// file://./src/betterbw/features/noCamsBeforeRoom.ts
 
 function closeCam(panel) {
 	const id = getUserId(panel);
@@ -3110,16 +2582,13 @@ function closeCam(panel) {
 function closeCamsUntil(roomSelected) {
 	queryPanels().forEach(closeCam);
 	const observer = new MutationObserver(mutations => {
-		for (const { addedNodes } of mutations)
-			for (const node of addedNodes)
-				if (node instanceof HTMLDivElement && node.matches(PANEL_SELECTOR))
-					closeCam(node);
+		for (const { addedNodes } of mutations) for (const node of addedNodes) if (node instanceof HTMLDivElement && node.matches(PANEL_SELECTOR)) closeCam(node);
 	});
 	observer.observe(document.body, { childList: true, subtree: true });
 	roomSelected.then(() => observer.disconnect());
 }
 
-;// file://./src/betterbw/styles/dragToSwap.css?raw
+// file://./src/betterbw/styles/dragToSwap.css?raw
 const dts_css = `
 .bbw-swap-highlight {
 	position: fixed;
@@ -3132,19 +2601,14 @@ const dts_css = `
 }
 `;
 
-;// file://./src/betterbw/features/dragToSwap.ts
+// file://./src/betterbw/features/dragToSwap.ts
 
 let dts_drag = null;
 const distance = (a, b) => Math.hypot(a.left - b.left, a.top - b.top);
 function highlight(rect) {
 	const el = document.createElement("div");
 	el.className = "bbw-swap-highlight";
-	Object.assign(el.style, {
-		left: `${rect.left}px`,
-		top: `${rect.top}px`,
-		width: `${rect.width}px`,
-		height: `${rect.height}px`,
-	});
+	Object.assign(el.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
 	document.body.appendChild(el);
 	return el;
 }
@@ -3196,18 +2660,12 @@ function dts_update() {
 }
 function dts_onPointerDown(event) {
 	if (0 !== event.button || !(event.target instanceof Element)) return;
-	if (
-		!event.target.closest(".jsPanel-hdr")
-		|| event.target.closest("button, input, a, .jsPanel-btn, .userAvatar")
-	)
-		return;
+	if (!event.target.closest(".jsPanel-hdr") || event.target.closest("button, input, a, .jsPanel-btn, .userAvatar")) return;
 	const panel = event.target.closest(PANEL_SELECTOR);
 	const index = panel?.dataset.gridIndex;
 	if (!panel || !index) return;
 	const slots = new Map();
-	for (const other of queryPanels())
-		if (other !== panel && other.dataset.gridIndex)
-			slots.set(other, other.getBoundingClientRect());
+	for (const other of queryPanels()) if (other !== panel && other.dataset.gridIndex) slots.set(other, other.getBoundingClientRect());
 	dts_drag = {
 		panel,
 		index,
@@ -3245,15 +2703,12 @@ function onPointerUp() {
 function setupDragToSwap() {
 	GM.addStyle(dts_css);
 	document.addEventListener("pointerdown", dts_onPointerDown, true);
-	document.addEventListener("pointermove", onPointerMove, {
-		capture: true,
-		passive: true,
-	});
+	document.addEventListener("pointermove", onPointerMove, { capture: true, passive: true });
 	document.addEventListener("pointerup", onPointerUp, true);
 	document.addEventListener("pointercancel", onPointerUp, true);
 }
 
-;// file://./src/betterbw/styles/static.css?raw
+// file://./src/betterbw/styles/static.css?raw
 const static_css = `
 body>div:nth-child(1) {
 	height: calc(100% - 4px);
@@ -3452,18 +2907,10 @@ input.numberOfCams {
 	text-decoration-style: solid;
 	text-decoration-thickness: 2px;
 }
-.jsPanel[data-status='undefined'] button:where([data-status-value='++']) {
-	display: none;
-}
-.jsPanel[data-status='--'] button:where([data-status-value='++']) {
-	display: none;
-}
-.jsPanel[data-status='-'] button:where([data-status-value='++']) {
-	display: none;
-}
-.jsPanel[data-status='+'] button:where([data-status-value='--']) {
-	display: none;
-}
+.jsPanel[data-status='undefined'] button:where([data-status-value='++']),
+.jsPanel[data-status='--'] button:where([data-status-value='++']),
+.jsPanel[data-status='-'] button:where([data-status-value='++']),
+.jsPanel[data-status='+'] button:where([data-status-value='--']),
 .jsPanel[data-status='++'] button:where([data-status-value='--']) {
 	display: none;
 }
@@ -3664,14 +3111,14 @@ video.mobile.mobile {
 }
 `;
 
-;// file://./src/betterbw/styles/topLevel.css?raw
+// file://./src/betterbw/styles/topLevel.css?raw
 const tl_css = `
 iframe {
 	display: block;
 }
 `;
 
-;// file://./src/betterbw/betterbw.user.ts
+// file://./src/betterbw/betterbw.user.ts
 
 async function topLevelStyles() {
 	GM.addStyle(tl_css);
@@ -3679,9 +3126,7 @@ async function topLevelStyles() {
 function hacks() {
 	chatHTML5.myUser.mutedUsers = chatHTML5.myUser.mutedUsers || "";
 	const original_updateNumberUsersDisplay = chatHTML5.updateNumberUsersDisplay;
-	chatHTML5.updateNumberUsersDisplay = debounce(
-		original_updateNumberUsersDisplay,
-	);
+	chatHTML5.updateNumberUsersDisplay = debounce(original_updateNumberUsersDisplay);
 	batchUserListRebuilds();
 	setupCamCleanup();
 	lightenTimers();
@@ -3693,11 +3138,7 @@ async function main() {
 	sweepExpiredCooldowns();
 	setupResponsiveLayout();
 	observeChatNav();
-	const roomSelected = waitToBe(
-		"#roomsModal",
-		["aria-hidden"],
-		el => "false" === el.getAttribute("aria-hidden"),
-	).then(() => waitToBe("#roomsModal"));
+	const roomSelected = waitToBe("#roomsModal", ["aria-hidden"], el => "false" === el.getAttribute("aria-hidden")).then(() => waitToBe("#roomsModal"));
 	closeCamsUntil(roomSelected);
 	observePanels();
 	setupCamsMoveAway();
@@ -3708,12 +3149,7 @@ async function main() {
 	await runAlgo(getSetting("preferredAlgo"));
 }
 
-;// file://./src/betterbw/index.ts
+// file://./src/betterbw/index.ts
 
 if (location.pathname.startsWith("/html5-chat/chatroom")) topLevelStyles();
-else if (
-	location.pathname.startsWith("//html5-chat/chat2")
-	&& "undefined" != typeof chatHTML5
-)
-	main();
-
+else if (location.pathname.startsWith("//html5-chat/chat2") && "undefined" != typeof chatHTML5) main();

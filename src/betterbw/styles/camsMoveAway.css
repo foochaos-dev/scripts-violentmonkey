@@ -11,3 +11,8 @@
 .jsPanel:is(.ui-draggable-dragging, .bbw-dragging) {
   translate: none;
 }
+
+/* A cam that slid down off the tabs lands in front of the row below it, so its controls stay clickable */
+.jsPanel.bbw-peeking {
+  z-index: 99 !important;
+}

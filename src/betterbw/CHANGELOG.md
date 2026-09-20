@@ -3,6 +3,25 @@
 All notable changes to Better BW are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.9.1] - 2026-09-20
+
+### Changed
+
+- "Cams move away": resting the pointer on the chat's tabs now moves only the cams that cover the tab strip, instead of shifting their whole column down. Those cams slide in front of the row below them, so their controls stay clickable
+- The script is 4% smaller (98.6 kB → 94.9 kB)
+
+### Fixed
+
+- A click on the controls of a cam that had moved away didn't register: every press dropped the cams back on their spots first, so the click landed on whatever ended up under the pointer. Only grabbing a cam by its title bar (the start of a drag) puts them back now
+
+### Internal
+
+- The bundle uses the members of the `preact`/`preactHooks` globals directly (`h(...)`, `useState(...)`), declared where the bundler declared the global
+- The bundle is formatted at 160 columns, and the module markers lost their leading `;`
+- `console.*` calls are stripped from the build (`drop_console`)
+- The rating buttons hidden by the buddy's status share a single rule in `static.css`
+
+
 ## [1.9.0] - 2026-09-16
 
 ### Changed
