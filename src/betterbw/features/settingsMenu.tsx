@@ -382,6 +382,12 @@ function SettingsPanel({ anchor }: { anchor: DOMRect }) {
               {group === 'Cams' && (
                 <>
                   <AlgoSelect />
+                  <ToggleSetting
+                    setting="upgradeMinus"
+                    label="Upgrade -"
+                    explain="Swaps an open - cam for a better one when there's one online: someone never rated with New, a + or ++ with Top. The ones not watching you back go first; a - cam you opened yourself stays at least 5 minutes"
+                    onChange={clickOnCurrentAlgoButton}
+                  />
                   <VolumePercentInput />
                   <SiteOptionInput option={START_MUTED_OPTION} onChange={rerender} />
                   <ToggleSetting setting="scrollToVolume" label="Scroll wheel changes the volume" />

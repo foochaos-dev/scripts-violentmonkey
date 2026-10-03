@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { PANEL_SELECTOR, queryPanels } from './utils/openPanel';
+import { PANEL_SELECTOR, markOpenedByUser, queryPanels } from './utils/openPanel';
 import { MenuActions } from './features/panelActions';
 import { spyOn, type Watchers } from './utils/spyOn';
 import { isOnCooldown } from './features/cooldown';
@@ -68,6 +68,9 @@ async function setupSidebar() {
     // Only the user's own clicks: the script's simulated ones (auto-opening, retries, the swap's re-click)
     // would otherwise close a cam whenever the chat's count is momentarily at the limit
     if (event.shiftKey || !event.originalEvent?.isTrusted) return;
+
+    const clicked = getUserById($(this).closest<HTMLDivElement>('.userItem')[0]?.dataset.id ?? '');
+    if (clicked) markOpenedByUser(clicked.username);
 
     const webcamNumber = chatHTML5.getWebcamNumber();
     const webcamMax = +chatHTML5.roles.user.webcamMax;

@@ -34,6 +34,11 @@ While it's running (`⏸` on the top bar), every time a cam closes (or someone o
 
 Click `⏸` to stop it: the open cams are kept, and aligned into the grid. `▶` starts it again.
 
+With **Upgrade `-`** (on by default), even when your screen is full it swaps an open `-` cam for a better one when there's one online (someone you haven't rated with `New`, a `+` or `++` with `Top`), one at a time:
+
+- The `-` cams that aren't watching you back go first
+- A `-` cam you opened yourself (clicking its camera icon on the sidebar) stays for at least 5 min; the ones the automation opened can be swapped anytime
+
 Buddies marked with `--`, or hidden with `X`/`⏱`, are never picked.
 The automation takes a break while the tab is in the background (let's save BW's resources), and catches up when you come back.
 
@@ -116,7 +121,7 @@ Hover `⚙` on the top bar to see them (click it to keep them open; `Esc` or a c
 - **Sidebar**: for how long buddies are online
 - **Chat**: group messages in a row from the same buddy, enter/leave/kick notices (and after how long they disappear)
 - **Cams**:
-    - Which cams to prioritize (see [Automations](#automations))
+    - Which cams to prioritize, and whether to upgrade `-` cams (see [Automations](#automations))
     - Default volume for new cams, and whether they start muted
     - Scroll wheel changes the volume, and pinch (or `Ctrl` + scroll) zooms into the cam (see [Cam gestures](#cam-gestures))
 - **Layout** (switching it waits for the "Apply layout" button, since it rearranges every cam):

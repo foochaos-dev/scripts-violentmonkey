@@ -1,4 +1,4 @@
-export const getManifest = ({ version = '1.11.0' } = {}) =>
+export const getManifest = ({ version = '1.12.0' } = {}) =>
   `// ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts

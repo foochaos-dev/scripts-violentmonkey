@@ -2,9 +2,11 @@ import { isOnCooldown, sessionCooldown } from '../features/cooldown';
 import { isDefined } from './filters';
 import { dataUsername } from './formatters';
 import { organizePanels } from './organizePanels';
-import { getUsername, getUserById } from './scrappers';
+import { getUsername, getUserById, getUserId } from './scrappers';
 import { topRandom } from './sortFunctions';
 import { getAlgo } from '../algo';
+import { getSetting } from '../features/settings';
+import { setNextCam } from '../features/observeOpenPanels';
 
 // Cams must not open automatically before the user has picked a chat room out of the room-selection modal
 let roomSelected = false;
@@ -110,12 +112,8 @@ export function openCandidates(candidates: Candidate[]) {
   const opened = queryPanels();
   let openedLength = opened.length || 0;
   const maxToOpen = +chatHTML5.roles.user.webcamMax;
-  if (openedLength >= maxToOpen) {
-    organizePanels();
-    return console.log(`Max number of panels (${maxToOpen}) already open`);
-  }
-
   const openedIds = new Set(Array.from(opened).map((panel) => getUsername(panel)));
+  if (openedLength >= maxToOpen) console.log(`Max number of panels (${maxToOpen}) already open`);
   while (openedLength < maxToOpen && candidates.length > 0) {
     const c = candidates.shift()!;
     if (openedIds.has(c.username)) continue;
@@ -125,5 +123,39 @@ export function openCandidates(candidates: Candidate[]) {
     openedLength++;
   }
 
+  if (getSetting('upgradeMinus')) upgradeMinusCam(opened, openedIds, candidates);
   organizePanels();
+}
+
+/** A "-" cam the user opened themselves is kept at least this long; the ones the algorithm opened can go anytime */
+const MINUS_HOLD_MS = 5 * 60_000;
+const openedByUser = new Map<string, number>();
+export const markOpenedByUser = (username: string) => openedByUser.set(username, Date.now());
+
+const isUpgradable = (panel: HTMLDivElement) =>
+  panel.dataset.status === '-' && Date.now() - (openedByUser.get(panel.dataset.username!) ?? 0) >= MINUS_HOLD_MS;
+const isWatchingMe = (panel: HTMLDivElement) => (getUserId(panel) ?? '') in chatHTML5.watchingAtMe;
+
+const isUpgrade: Record<string, (status: string | undefined) => boolean> = {
+  new: (status) => status === undefined,
+  top: (status) => status === '+' || status === '++',
+};
+
+/**
+ * Swaps one open "-" cam for a better candidate. One per run: the swap goes through setNextCam, so the slot it frees
+ * is taken by that candidate rather than refilled by the algorithm; the refill after that swap runs this again
+ */
+function upgradeMinusCam(opened: NodeListOf<HTMLDivElement>, openedIds: Set<string | undefined>, candidates: Candidate[]) {
+  // The ones not watching me back go first
+  const minus = Array.from(opened)
+    .filter(isUpgradable)
+    .sort((a, b) => +isWatchingMe(a) - +isWatchingMe(b))[0];
+  const index = candidates.findIndex((c) => isUpgrade[getAlgo()]?.(c.status) && !openedIds.has(c.username));
+  if (!minus || index < 0) return;
+
+  const better = candidates.splice(index, 1)[0]!;
+  console.log(`[BBW] Upgrading ${getUsername(minus)} (-) to ${better.username} (${better.status ?? 'new'})`);
+  setNextCam(better.item);
+  jsPanel.activePanels.getPanel(minus.id)?.close();
+  verifyOpened(better, candidates);
 }

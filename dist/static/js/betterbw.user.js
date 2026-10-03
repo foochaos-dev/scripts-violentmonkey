@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts
-// @version     1.11.0
+// @version     1.12.0
 // @author      Thick Bro
 // @match       https://bateworld.com/html5-chat/chatroom.php
 // @match       https://bateworld.com//html5-chat/chat2/*
@@ -68,6 +68,7 @@ const DEFAULTS = {
 	classicWidth: 365,
 	adaptableRows: 3,
 	camsMoveAway: true,
+	upgradeMinus: true,
 };
 const getSetting = key => GM_getValue(`settings.${key}`, DEFAULTS[key]);
 const setSetting = (key, value) => GM.setValue(`settings.${key}`, value);
@@ -230,136 +231,91 @@ const setAlgo = val => {
 	document.body.dataset.algo = algo_algo = val;
 };
 
-// file://./src/betterbw/utils/openPanel.ts
-
-let openPanel_roomSelected = false;
-const setRoomSelected = () => (openPanel_roomSelected = true);
-const PANEL_SELECTOR = ".jsPanel.jsPanel-theme-default";
-const queryPanels = () => document.querySelectorAll(PANEL_SELECTOR);
-const queryPanel = (target = document) => target.querySelector(PANEL_SELECTOR);
-function clickWebcamButton(button) {
-	const menuWasOpen = $("#userMenu").is(":visible");
-	button.trigger("click");
-	if (!menuWasOpen) $("#userMenu").hide();
-}
-function tryToOpenPanel(candidate) {
-	clickWebcamButton($(".webcamBtn", candidate.item));
-}
-const hasPanel = username => Array.from(document.querySelectorAll(PANEL_SELECTOR)).some(panel => scrappers_getUsername(panel) === username);
-const hasRoomForAnotherCam = () => {
-	const max = +chatHTML5.roles.user.webcamMax;
-	return document.querySelectorAll(PANEL_SELECTOR).length < max && chatHTML5.getWebcamNumber() < max;
-};
-function verifyOpened(candidate, fallbacks) {
-	setTimeout(async () => {
-		if (hasPanel(candidate.username)) return;
-		const full_username = candidate.item.dataset.username;
-		if (full_username) {
-			sessionCooldown.add(full_username);
-			setTimeout(() => sessionCooldown["delete"](full_username), 1800000);
-		}
-		if ("" === getAlgo() || !hasRoomForAnotherCam()) return;
-		let next = fallbacks.shift();
-		while (next && (hasPanel(next.username) || (await isOnCooldown(next.username)))) next = fallbacks.shift();
-		if (!next || "" === getAlgo() || !hasRoomForAnotherCam()) return;
-		tryToOpenPanel(next);
-		verifyOpened(next, fallbacks);
-	}, 6000);
-}
-const getCandidates = async (compareFn = topRandom, _biases = {}) => {
-	const biases = { "-": 1, undefined: 2, "+": 3, "++": 4, ..._biases };
-	const promises = Array.from(
-		document.querySelectorAll('#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))').values(),
-	).map(async item => {
-		const full_username = item.dataset.username;
-		const username = full_username?.split("_")[0];
-		if (!username) return;
-		if (sessionCooldown.has(full_username)) return;
-		const status = await GM.getValue(`${username}_status`);
-		if ("--" === status) return;
-		if (await isOnCooldown(username)) return;
-		return { item, username, status, bias: biases[status], onlineSince: (item.dataset.id && getUserById(item.dataset.id)?.obj.date) || 0 };
-	});
-	return await Promise.all(promises).then(list => list.filter(isDefined).sort(compareFn));
-};
-function openCandidates(candidates) {
-	if (!openPanel_roomSelected) return;
-	const opened = document.querySelectorAll(PANEL_SELECTOR);
-	let openedLength = opened.length || 0;
-	const maxToOpen = +chatHTML5.roles.user.webcamMax;
-	if (openedLength >= maxToOpen) return void organizePanels();
-	const openedIds = new Set(Array.from(opened).map(panel => scrappers_getUsername(panel)));
-	while (openedLength < maxToOpen && candidates.length > 0) {
-		const c = candidates.shift();
-		if (openedIds.has(c.username)) continue;
-		tryToOpenPanel(c);
-		verifyOpened(c, candidates);
-		openedLength++;
-	}
-	organizePanels();
-}
-
-// file://./src/betterbw/utils/waitToBe.ts
-function waitToBe(selector, attributeFilter = ["aria-hidden"], predicate = el => "false" !== el.getAttribute("aria-hidden")) {
-	return new Promise(resolve => {
-		let attrObserver = null;
-		let domObserver = null;
-		function cleanup() {
-			if (attrObserver) {
-				attrObserver.disconnect();
-				attrObserver = null;
-			}
-			if (domObserver) {
-				domObserver.disconnect();
-				domObserver = null;
-			}
-		}
-		function attachAttrObserver(el) {
-			if (!el) return false;
-			if (predicate(el)) {
-				cleanup();
-				resolve(el);
-				return true;
-			}
-			(attrObserver = new MutationObserver(muts => {
-				for (const m of muts)
-					if ("attributes" === m.type && m.attributeName && attributeFilter.includes(m.attributeName)) {
-						if (predicate(el)) {
-							cleanup();
-							resolve(el);
-							return;
-						}
-					}
-			})).observe(el, { attributes: true, attributeFilter });
-			return false;
-		}
-		const existing = document.querySelector(selector);
-		if (attachAttrObserver(existing)) return;
-		(domObserver = new MutationObserver(muts => {
-			for (const m of muts)
-				for (const node of m.addedNodes) {
-					if (!(node instanceof HTMLElement)) continue;
-					const found = node.matches(selector) ? node : node.querySelector(selector);
-					if (found) {
-						if (attachAttrObserver(found)) {
-							if (domObserver) {
-								domObserver.disconnect();
-								domObserver = null;
-							}
-							return;
-						}
-					}
-				}
-		})).observe(document.body, { childList: true, subtree: true });
-	});
-}
-
-const { h, Fragment } = window.preact;
-
 // file://./src/betterbw/utils/formatters.ts
 const dataUsername = id => `[data-username="${id}"],[data-username^="${id}_"]`;
 const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapeHtml = text => text.replace(/[&<>"']/g, char => HTML_ESCAPES[char]);
+
+// file://./src/betterbw/styles/openPanels.css?raw
+const openPanels_css = `
+[data-username="I_am_watching"] {
+	#userList &.userItem .webcamBtn {
+		background: rgba(80, 206, 133, 1) !important;
+	}
+	#tabs &.userItem:before,
+	#tabs & .watchCam:before {
+		content: '';
+		display: block;
+		position: absolute;
+		width: 12px;
+		height: 11px;
+		top: 50%;
+		transform: translateY(-50%) translateX(-130%);
+		border-radius: 2px;
+		border: rgba(178, 178, 178, 1) solid 1px;
+		border-top-width: 3px;
+	}
+}
+.jsPanel.watchingMe {
+	--gridGap: 4px;
+	box-shadow: #FFD700 0px 0px 1px var(--gridGap) !important;
+	& .jsPanel-headerbar {
+		background: gold;
+		background: linear-gradient(gold 0%, transparent 30%, transparent 70%, gold 85%);
+	}
+	& .jsPanel-title::before {
+		content: "👁️";
+		content: "\\f06e";
+		font-family: "Font Awesome 5 Free";
+		font-weight: 400;
+		color: gold;
+		position: absolute;
+		z-index: 1;
+		left: -2px;
+		top: -5px;
+		text-shadow: 1px 1px 0 goldenrod;
+		font-size: 14px;
+	}
+}
+.watching_private_cam {
+	display: block;
+	position: absolute;
+	color: red;
+	content: ' \\f023';
+	font-family: 'Font Awesome 5 Free';
+	font-weight: 900;
+	top: 1px;
+	left: 45px;
+}
+`;
+
+// file://./src/betterbw/dynamicOpenedStyle.ts
+
+const dynamicOpenedStyle = GM_addStyle("");
+function updateCssForOpenedPanels() {
+	const opened = queryPanels();
+	if (!opened?.length) return;
+	const usernames = Array.from(opened)
+		.map(panel => scrappers_getUsername(panel))
+		.filter(isDefined);
+	const selectorsIamWatching = usernames.map(dataUsername).join(",");
+	const selectorsWatchingPrivateCams = usernames
+		.map(
+			id =>
+				`body:has(#userList .userItem:where(${dataUsername(id)}) .webcamBtn.visible i.lock.fa-lock) .jsPanel[data-username="${id}"] .jsPanel-title>span:before`,
+		)
+		.join(",");
+	dynamicOpenedStyle.innerHTML = openPanels_css.replace(/(\.watching_private_cam|\[data-username="I_am_watching"\])/g, arg => {
+		switch (arg) {
+			case ".watching_private_cam":
+				return selectorsWatchingPrivateCams;
+			case '[data-username="I_am_watching"]':
+				return selectorsIamWatching;
+			default:
+				return arg;
+		}
+	});
+}
 
 // file://./src/betterbw/styles/tiers.css?raw
 const tiers_css = `
@@ -435,7 +391,7 @@ async function getCSS() {
 		group_plus: dataUserItems(groups["+"]),
 		group_plus_plus: dataUserItems(groups["++"]),
 	};
-	return tiers_css.replace(/\.(group_\w+)/gm, (_match, key, openStyle) => selectors[key] + openStyle);
+	return tiers_css.replace(/\.(group_\w+)/gm, (_match, key) => selectors[key]);
 }
 const dynamicStyle = GM_addStyle("");
 const refreshDynamicStyle = enqueueAsync(async () => {
@@ -453,6 +409,8 @@ async function rotateCam({ id, panel }) {
 	panel.dataset.rotation = newRotation;
 	return GM.setValue(`${id}_rotation`, newRotation);
 }
+
+const { h, Fragment } = window.preact;
 
 // file://./src/betterbw/features/audioMuted.ts
 const sessionAudioMuted = new Map();
@@ -964,98 +922,6 @@ function persistVolumeChange(video, username) {
 	);
 }
 
-// file://./src/betterbw/utils/spyOn.ts
-function spyOn(obj, watchers) {
-	return Proxy.revocable(obj, {
-		set(target, prop, value) {
-			if (prop in watchers && target[prop] !== value) watchers[prop](value);
-			target[prop] = value;
-			return true;
-		},
-	});
-}
-
-// file://./src/betterbw/styles/openPanels.css?raw
-const openPanels_css = `
-[data-username="I_am_watching"] {
-	#userList &.userItem .webcamBtn {
-		background: rgba(80, 206, 133, 1) !important;
-	}
-	#tabs &.userItem:before,
-	#tabs & .watchCam:before {
-		content: '';
-		display: block;
-		position: absolute;
-		width: 12px;
-		height: 11px;
-		top: 50%;
-		transform: translateY(-50%) translateX(-130%);
-		border-radius: 2px;
-		border: rgba(178, 178, 178, 1) solid 1px;
-		border-top-width: 3px;
-	}
-}
-.jsPanel.watchingMe {
-	--gridGap: 4px;
-	box-shadow: #FFD700 0px 0px 1px var(--gridGap) !important;
-	& .jsPanel-headerbar {
-		background: gold;
-		background: linear-gradient(gold 0%, transparent 30%, transparent 70%, gold 85%);
-	}
-	& .jsPanel-title::before {
-		content: "👁️";
-		content: "\\f06e";
-		font-family: "Font Awesome 5 Free";
-		font-weight: 400;
-		color: gold;
-		position: absolute;
-		z-index: 1;
-		left: -2px;
-		top: -5px;
-		text-shadow: 1px 1px 0 goldenrod;
-		font-size: 14px;
-	}
-}
-.watching_private_cam {
-	display: block;
-	position: absolute;
-	color: red;
-	content: ' \\f023';
-	font-family: 'Font Awesome 5 Free';
-	font-weight: 900;
-	top: 1px;
-	left: 45px;
-}
-`;
-
-// file://./src/betterbw/dynamicOpenedStyle.ts
-
-const dynamicOpenedStyle = GM_addStyle("");
-function updateCssForOpenedPanels() {
-	const opened = queryPanels();
-	if (!opened?.length) return;
-	const usernames = Array.from(opened)
-		.map(panel => scrappers_getUsername(panel))
-		.filter(isDefined);
-	const selectorsIamWatching = usernames.map(dataUsername).join(",");
-	const selectorsWatchingPrivateCams = usernames
-		.map(
-			id =>
-				`body:has(#userList .userItem:where(${dataUsername(id)}) .webcamBtn.visible i.lock.fa-lock) .jsPanel[data-username="${id}"] .jsPanel-title>span:before`,
-		)
-		.join(",");
-	dynamicOpenedStyle.innerHTML = openPanels_css.replace(/(\.watching_private_cam|\[data-username="I_am_watching"\])/g, arg => {
-		switch (arg) {
-			case ".watching_private_cam":
-				return selectorsWatchingPrivateCams;
-			case '[data-username="I_am_watching"]':
-				return selectorsIamWatching;
-			default:
-				return arg;
-		}
-	});
-}
-
 // file://./src/betterbw/features/tabFocus.ts
 const tabFocused = () => "visible" === document.visibilityState;
 const whenTabFocused = callback => {
@@ -1097,6 +963,17 @@ function observeIt({ target, selector, forEachAddedNode, forEachRemovedNode, cle
 			observerPanels.disconnect();
 		},
 	};
+}
+
+// file://./src/betterbw/utils/spyOn.ts
+function spyOn(obj, watchers) {
+	return Proxy.revocable(obj, {
+		set(target, prop, value) {
+			if (prop in watchers && target[prop] !== value) watchers[prop](value);
+			target[prop] = value;
+			return true;
+		},
+	});
 }
 
 // file://./src/betterbw/features/globalActions.tsx
@@ -1219,7 +1096,7 @@ function detach(media) {
 	media.pause();
 	media.srcObject = null;
 }
-const cc_hasPanel = id => Array.from(queryPanels()).some(panel => getUserId(panel) === id);
+const hasPanel = id => Array.from(queryPanels()).some(panel => getUserId(panel) === id);
 function stopWatching(id, why) {
 	if (recentlyStopped.has(id)) return;
 	chatHTML5.socket.emit("watch", chatHTML5.myUser.id, id, false);
@@ -1243,7 +1120,7 @@ function setupCamCleanup() {
 	HTMLMediaElement.prototype.play = function () {
 		if (this.isConnected || !this.srcObject) return play.call(this);
 		const id = getMediaUserId(this);
-		if (id && cc_hasPanel(id)) return play.call(this);
+		if (id && hasPanel(id)) return play.call(this);
 		detach(this);
 		if (id) stopWatching(id, "it connected after its panel closed");
 		return Promise.resolve();
@@ -1252,7 +1129,7 @@ function setupCamCleanup() {
 function cleanupClosedCam(panel) {
 	panel.querySelectorAll("video, audio").forEach(detach);
 	const id = getUserId(panel);
-	if (id && !cc_hasPanel(id)) stopWatching(id, "its panel closed");
+	if (id && !hasPanel(id)) stopWatching(id, "its panel closed");
 }
 
 // file://./src/betterbw/styles/camsMoveAway.css?raw
@@ -1430,6 +1307,146 @@ function observePanels() {
 			updateCssForOpenedPanels();
 			markPanelsWatchingMe();
 		},
+	});
+}
+
+// file://./src/betterbw/utils/openPanel.ts
+
+let openPanel_roomSelected = false;
+const setRoomSelected = () => (openPanel_roomSelected = true);
+const PANEL_SELECTOR = ".jsPanel.jsPanel-theme-default";
+const queryPanels = () => document.querySelectorAll(PANEL_SELECTOR);
+const queryPanel = (target = document) => target.querySelector(PANEL_SELECTOR);
+function clickWebcamButton(button) {
+	const menuWasOpen = $("#userMenu").is(":visible");
+	button.trigger("click");
+	if (!menuWasOpen) $("#userMenu").hide();
+}
+function tryToOpenPanel(candidate) {
+	clickWebcamButton($(".webcamBtn", candidate.item));
+}
+const openPanel_hasPanel = username => Array.from(document.querySelectorAll(PANEL_SELECTOR)).some(panel => scrappers_getUsername(panel) === username);
+const hasRoomForAnotherCam = () => {
+	const max = +chatHTML5.roles.user.webcamMax;
+	return document.querySelectorAll(PANEL_SELECTOR).length < max && chatHTML5.getWebcamNumber() < max;
+};
+function verifyOpened(candidate, fallbacks) {
+	setTimeout(async () => {
+		if (openPanel_hasPanel(candidate.username)) return;
+		const full_username = candidate.item.dataset.username;
+		if (full_username) {
+			sessionCooldown.add(full_username);
+			setTimeout(() => sessionCooldown["delete"](full_username), 1800000);
+		}
+		if ("" === getAlgo() || !hasRoomForAnotherCam()) return;
+		let next = fallbacks.shift();
+		while (next && (openPanel_hasPanel(next.username) || (await isOnCooldown(next.username)))) next = fallbacks.shift();
+		if (!next || "" === getAlgo() || !hasRoomForAnotherCam()) return;
+		tryToOpenPanel(next);
+		verifyOpened(next, fallbacks);
+	}, 6000);
+}
+const getCandidates = async (compareFn = topRandom, _biases = {}) => {
+	const biases = { "-": 1, undefined: 2, "+": 3, "++": 4, ..._biases };
+	const promises = Array.from(
+		document.querySelectorAll('#userList [data-status="online"][data-webcam="true"]:not(:has(:is(.fa.fa-lock, .fa.fa-eye-slash)))').values(),
+	).map(async item => {
+		const full_username = item.dataset.username;
+		const username = full_username?.split("_")[0];
+		if (!username) return;
+		if (sessionCooldown.has(full_username)) return;
+		const status = await GM.getValue(`${username}_status`);
+		if ("--" === status) return;
+		if (await isOnCooldown(username)) return;
+		return { item, username, status, bias: biases[status], onlineSince: (item.dataset.id && getUserById(item.dataset.id)?.obj.date) || 0 };
+	});
+	return await Promise.all(promises).then(list => list.filter(isDefined).sort(compareFn));
+};
+function openCandidates(candidates) {
+	if (!openPanel_roomSelected) return;
+	const opened = document.querySelectorAll(PANEL_SELECTOR);
+	let openedLength = opened.length || 0;
+	const maxToOpen = +chatHTML5.roles.user.webcamMax;
+	const openedIds = new Set(Array.from(opened).map(panel => scrappers_getUsername(panel)));
+	while (openedLength < maxToOpen && candidates.length > 0) {
+		const c = candidates.shift();
+		if (openedIds.has(c.username)) continue;
+		tryToOpenPanel(c);
+		verifyOpened(c, candidates);
+		openedLength++;
+	}
+	if (getSetting("upgradeMinus")) upgradeMinusCam(opened, openedIds, candidates);
+	organizePanels();
+}
+const openedByUser = new Map();
+const markOpenedByUser = username => openedByUser.set(username, Date.now());
+const isUpgradable = panel => "-" === panel.dataset.status && Date.now() - (openedByUser.get(panel.dataset.username) ?? 0) >= 300000;
+const isWatchingMe = panel => (getUserId(panel) ?? "") in chatHTML5.watchingAtMe;
+const isUpgrade = { new: status => void 0 === status, top: status => "+" === status || "++" === status };
+function upgradeMinusCam(opened, openedIds, candidates) {
+	const minus = Array.from(opened)
+		.filter(isUpgradable)
+		.sort((a, b) => isWatchingMe(a) - isWatchingMe(b))[0];
+	const index = candidates.findIndex(c => isUpgrade[getAlgo()]?.(c.status) && !openedIds.has(c.username));
+	if (!minus || index < 0) return;
+	const better = candidates.splice(index, 1)[0];
+	setNextCam(better.item);
+	jsPanel.activePanels.getPanel(minus.id)?.close();
+	verifyOpened(better, candidates);
+}
+
+// file://./src/betterbw/utils/waitToBe.ts
+function waitToBe(selector, attributeFilter = ["aria-hidden"], predicate = el => "false" !== el.getAttribute("aria-hidden")) {
+	return new Promise(resolve => {
+		let attrObserver = null;
+		let domObserver = null;
+		function cleanup() {
+			if (attrObserver) {
+				attrObserver.disconnect();
+				attrObserver = null;
+			}
+			if (domObserver) {
+				domObserver.disconnect();
+				domObserver = null;
+			}
+		}
+		function attachAttrObserver(el) {
+			if (!el) return false;
+			if (predicate(el)) {
+				cleanup();
+				resolve(el);
+				return true;
+			}
+			(attrObserver = new MutationObserver(muts => {
+				for (const m of muts)
+					if ("attributes" === m.type && m.attributeName && attributeFilter.includes(m.attributeName)) {
+						if (predicate(el)) {
+							cleanup();
+							resolve(el);
+							return;
+						}
+					}
+			})).observe(el, { attributes: true, attributeFilter });
+			return false;
+		}
+		const existing = document.querySelector(selector);
+		if (attachAttrObserver(existing)) return;
+		(domObserver = new MutationObserver(muts => {
+			for (const m of muts)
+				for (const node of m.addedNodes) {
+					if (!(node instanceof HTMLElement)) continue;
+					const found = node.matches(selector) ? node : node.querySelector(selector);
+					if (found) {
+						if (attachAttrObserver(found)) {
+							if (domObserver) {
+								domObserver.disconnect();
+								domObserver = null;
+							}
+							return;
+						}
+					}
+				}
+		})).observe(document.body, { childList: true, subtree: true });
 	});
 }
 
@@ -2066,6 +2083,13 @@ function SettingsPanel({ anchor }) {
 								Fragment,
 								null,
 								h(AlgoSelect, null),
+								h(ToggleSetting, {
+									setting: "upgradeMinus",
+									label: "Upgrade -",
+									explain:
+										"Swaps an open - cam for a better one when there's one online: someone never rated with New, a + or ++ with Top. The ones not watching you back go first; a - cam you opened yourself stays at least 5 minutes",
+									onChange: clickOnCurrentAlgoButton,
+								}),
 								h(VolumePercentInput, null),
 								h(SiteOptionInput, { option: START_MUTED_OPTION, onChange: rerender }),
 								h(ToggleSetting, { setting: "scrollToVolume", label: "Scroll wheel changes the volume" }),
@@ -2389,6 +2413,8 @@ async function setupSidebar() {
 	if (!userList) return;
 	$(userList).on("click", ".webcamBtn", function (event) {
 		if (event.shiftKey || !event.originalEvent?.isTrusted) return;
+		const clicked = getUserById($(this).closest(".userItem")[0]?.dataset.id ?? "");
+		if (clicked) markOpenedByUser(clicked.username);
 		const webcamNumber = chatHTML5.getWebcamNumber();
 		const webcamMax = +chatHTML5.roles.user.webcamMax;
 		if (webcamNumber < webcamMax) return;

@@ -3,6 +3,12 @@
 All notable changes to Better BW are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.12.0] - 2026-10-03
+
+### Added
+
+- "Upgrade -" setting (Cams): whenever cams get (re)filled, an open `-` cam is swapped for a better buddy online, one at a time: someone never rated with the New algorithm, a `+` or `++` with Top.
+
 ## [1.11.0] - 2026-10-03
 
 ### Added

@@ -17,6 +17,8 @@ const DEFAULTS = {
   adaptableRows: 3,
   /** Cams slide out of the way while the pointer is over the chat's tabs or the buddy list */
   camsMoveAway: true,
+  /** Swaps open "-" cams for better candidates (by the running algorithm) whenever cams get (re)filled */
+  upgradeMinus: true,
 };
 type Settings = typeof DEFAULTS;
 export type BooleanSetting = { [K in keyof Settings]: Settings[K] extends boolean ? K : never }[keyof Settings];

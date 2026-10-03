@@ -23,9 +23,7 @@ async function getCSS() {
     group_plus_plus: dataUserItems(groups['++']),
   };
 
-  return tiersCss.replace(/\.(group_\w+)/gm, (_match, key, openStyle) => {
-    return selectors[key] + openStyle;
-  });
+  return tiersCss.replace(/\.(group_\w+)/gm, (_match, key: keyof typeof selectors) => selectors[key]);
 }
 
 export const dynamicStyle = GM_addStyle('');
