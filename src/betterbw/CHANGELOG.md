@@ -3,6 +3,22 @@
 All notable changes to Better BW are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.11.0] - 2026-10-03
+
+### Added
+
+- The cam's close button also accepts Ctrl + click and middle click, matching its header, to close it and reduce the # of cams
+
+### Changed
+
+- The grid fills in growing squares (2x2, 3x3, 4x4...) instead of the top 2 rows first, so a few cams on a 4+ rows grid spread over all the rows
+
+### Fixed
+
+- Middle click / Ctrl + click on a cam's header to close it and reduce the # of cams wasn't actually reducing anything.
+- Closing a cam on cooldown (1 min, 15 min, 2h) could reopen that same person right back, especially near the end of the candidate queue.
+- Bookmarklet URL
+
 ## [1.10.0] - 2026-09-20
 
 ### Added

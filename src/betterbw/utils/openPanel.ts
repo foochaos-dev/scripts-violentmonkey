@@ -41,7 +41,7 @@ const hasRoomForAnotherCam = () => {
 
 /** If a candidate's panel never actually opens (offline, private, kicked, ...), skip it for a while and try the next one instead */
 function verifyOpened(candidate: Candidate, fallbacks: Candidate[]) {
-  setTimeout(() => {
+  setTimeout(async () => {
     if (hasPanel(candidate.username)) return;
 
     const full_username = candidate.item.dataset.username;
@@ -54,9 +54,10 @@ function verifyOpened(candidate: Candidate, fallbacks: Candidate[]) {
     // (e.g. that cam was just slow to appear), which would go over the limit
     if (getAlgo() === '' || !hasRoomForAnotherCam()) return;
 
+    // The fallbacks were picked when the batch opened: some may have been closed onto a cooldown since
     let next = fallbacks.shift();
-    while (next && hasPanel(next.username)) next = fallbacks.shift();
-    if (!next) return;
+    while (next && (hasPanel(next.username) || (await isOnCooldown(next.username)))) next = fallbacks.shift();
+    if (!next || getAlgo() === '' || !hasRoomForAnotherCam()) return;
 
     console.warn(`[BBW] Cam for ${candidate.username} didn't open; trying ${next.username} instead`);
     tryToOpenPanel(next);

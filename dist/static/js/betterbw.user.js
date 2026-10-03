@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts
-// @version     1.10.0
+// @version     1.11.0
 // @author      Thick Bro
 // @match       https://bateworld.com/html5-chat/chatroom.php
 // @match       https://bateworld.com//html5-chat/chat2/*
@@ -24,13 +24,20 @@
 // ==/UserScript==
 
 // file://./src/betterbw/features/cooldown.ts
+const localCooldowns = new Map();
 function cooldownIt({ username, minutes = 15, panel }) {
 	if (!username) return;
 	const expiry = Date.now() + 60000 * minutes;
+	localCooldowns.set(username, expiry);
 	GM.setValue(`${username}_cooldown`, expiry);
 	if (panel) jsPanel.activePanels.getPanel(panel.id)?.close();
 }
 async function isOnCooldown(id) {
+	const local = localCooldowns.get(id);
+	if (void 0 !== local) {
+		if (Date.now() < local) return true;
+		localCooldowns.delete(id);
+	}
 	const val = await GM.getValue(`${id}_cooldown`);
 	if (!val) return null;
 	if (Date.now() < Number(val)) return true;
@@ -122,7 +129,10 @@ function* gridPositions({ width, height, cols, rows }) {
 		offsetX: -(gridconf.MARGIN_RIGHT + c * (width + gridconf.GAP_X)),
 		offsetY: gridconf.MARGIN_TOP + r * (height + gridconf.GAP_Y),
 	});
-	for (let band = 0; band < rows; band += 2) for (let c = 0; c < cols; c++) for (let r = band; r < Math.min(band + 2, rows); r++) yield place(c, r);
+	for (let k = 0; k < Math.max(cols, rows); k++) {
+		if (k < rows) for (let c = 0; c < Math.min(k, cols); c++) yield place(c, k);
+		if (k < cols) for (let r = 0; r <= Math.min(k, rows - 1); r++) yield place(k, r);
+	}
 	for (let c = cols; ; c++) for (let r = 0; r < rows; r++) yield place(c, r);
 }
 function placeInSlot(panel, index) {
@@ -236,25 +246,22 @@ function tryToOpenPanel(candidate) {
 	clickWebcamButton($(".webcamBtn", candidate.item));
 }
 const hasPanel = username => Array.from(document.querySelectorAll(PANEL_SELECTOR)).some(panel => scrappers_getUsername(panel) === username);
+const hasRoomForAnotherCam = () => {
+	const max = +chatHTML5.roles.user.webcamMax;
+	return document.querySelectorAll(PANEL_SELECTOR).length < max && chatHTML5.getWebcamNumber() < max;
+};
 function verifyOpened(candidate, fallbacks) {
-	setTimeout(() => {
+	setTimeout(async () => {
 		if (hasPanel(candidate.username)) return;
 		const full_username = candidate.item.dataset.username;
 		if (full_username) {
 			sessionCooldown.add(full_username);
 			setTimeout(() => sessionCooldown["delete"](full_username), 1800000);
 		}
-		if (
-			"" === getAlgo()
-			|| !(() => {
-				const max = +chatHTML5.roles.user.webcamMax;
-				return document.querySelectorAll(PANEL_SELECTOR).length < max && chatHTML5.getWebcamNumber() < max;
-			})()
-		)
-			return;
+		if ("" === getAlgo() || !hasRoomForAnotherCam()) return;
 		let next = fallbacks.shift();
-		while (next && hasPanel(next.username)) next = fallbacks.shift();
-		if (!next) return;
+		while (next && (hasPanel(next.username) || (await isOnCooldown(next.username)))) next = fallbacks.shift();
+		if (!next || "" === getAlgo() || !hasRoomForAnotherCam()) return;
 		tryToOpenPanel(next);
 		verifyOpened(next, fallbacks);
 	}, 6000);
@@ -899,9 +906,19 @@ async function attachPanelActions(panel) {
 	preact.render(h(PanelActions, { username: username, panel: panel }), actions);
 	panel.dataset.rotation = await GM.getValue(`${username}_rotation`, "0");
 	$(".jsPanel-btn.jsPanel-btn-close", panel)
-		.attr("title", "Close\n\nShift + click: also reduce the # of cams")
-		.on("click", event => {
-			if (event.shiftKey) chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
+		.attr("title", "Close\n\nShift + click or Ctrl + click: also reduce the # of cams\nMiddle click: close and reduce the # of cams")
+		.on("mousedown", event => {
+			if (1 === event.button) event.preventDefault();
+		})
+		.on("auxclick click", event => {
+			if ("auxclick" === event.type) {
+				if (1 !== event.button) return;
+				event.preventDefault();
+				chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber() - 1;
+				cooldownIt({ username, minutes: 1, panel });
+				return;
+			}
+			if (event.shiftKey || event.ctrlKey) chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
 			cooldownIt({ username: username, minutes: 1 });
 		});
 	$(header)
@@ -912,7 +929,7 @@ async function attachPanelActions(panel) {
 		.on("auxclick click", event => {
 			if ("auxclick" === event.type ? 1 !== event.button : !event.ctrlKey) return;
 			event.preventDefault();
-			chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber();
+			chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber() - 1;
 			cooldownIt({ username, minutes: 1, panel });
 		});
 	$(".userAvatar", panel).on("click", event => {

@@ -186,10 +186,26 @@ export async function attachPanelActions(panel: HTMLDivElement) {
   panel.dataset.rotation = await GM.getValue(`${username}_rotation`, '0');
 
   $('.jsPanel-btn.jsPanel-btn-close', panel)
-    .attr('title', 'Close\n\nShift + click: also reduce the # of cams')
-    .on('click', (event) => {
-      if (event.shiftKey) {
-        chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // getWebcamNumber() is already updated
+    .attr(
+      'title',
+      'Close\n\nShift + click or Ctrl + click: also reduce the # of cams\nMiddle click: close and reduce the # of cams'
+    )
+    .on('mousedown', (event) => {
+      if (event.button === 1) event.preventDefault(); // Stop the middle-click autoscroll cursor
+    })
+    .on('auxclick click', (event) => {
+      if (event.type === 'auxclick') {
+        if (event.button !== 1) return;
+        event.preventDefault();
+
+        // Unlike a plain/shift/ctrl click, this button's own close listener doesn't react to auxclick, so the panel isn't closed yet
+        chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber() - 1;
+        cooldownIt({ username, minutes: 1, panel });
+        return;
+      }
+
+      if (event.shiftKey || event.ctrlKey) {
+        chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // jsPanel's own close listener (bound earlier) already closed the panel
       }
 
       cooldownIt({ username: username, minutes: 1 });
@@ -204,7 +220,7 @@ export async function attachPanelActions(panel: HTMLDivElement) {
       if (event.type === 'auxclick' ? event.button !== 1 : !event.ctrlKey) return;
       event.preventDefault();
 
-      chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber(); // getWebcamNumber() is already updated
+      chatHTML5.roles.user.webcamMax = chatHTML5.getWebcamNumber() - 1; // this panel isn't closed yet, unlike the close button's case above
       cooldownIt({ username, minutes: 1, panel });
     });
 

@@ -7,5 +7,5 @@
 fetch("https://raw.githubusercontent.com/foochaos-dev/scripts-violentmonkey/main/src/betterbw/bookmarklet/shimmonkey.js")
 	.then(r => r.text())
 	// Indirect eval: runs in the global scope, where the file evaluates to Shimmonkey's function.
-	.then(src => (0, eval)(src)("https://sleazyfork.org/scripts/556219-better-bateworld-com/code.user.js"))
+	.then(src => (0, eval)(src)("https://raw.githubusercontent.com/foochaos-dev/scripts-violentmonkey/main/dist/static/js/betterbw.user.js"))
 	.catch(err => alert(`Better bateworld.com bookmarklet failed: ${err.message}`));

@@ -60,7 +60,10 @@ function camsWidth() {
   return BASE_COLS * (width + gridconf.GAP_X) - gridconf.GAP_X + gridconf.MARGIN_RIGHT;
 }
 
-/** Fills the grid in bands of 2 rows, column by column; then extra columns to the left, over the chat */
+/**
+ * Fills the grid in growing squares (1x1, 2x2, 3x3...): row k across the current width, then column k;
+ * once the rows run out it grows column by column. Then extra columns to the left, over the chat
+ */
 function* gridPositions({ width, height, cols, rows }: Layout) {
   const place = (c: number, r: number) => ({
     ...base,
@@ -68,8 +71,9 @@ function* gridPositions({ width, height, cols, rows }: Layout) {
     offsetY: gridconf.MARGIN_TOP + r * (height + gridconf.GAP_Y),
   });
 
-  for (let band = 0; band < rows; band += 2) {
-    for (let c = 0; c < cols; c++) for (let r = band; r < Math.min(band + 2, rows); r++) yield place(c, r);
+  for (let k = 0; k < Math.max(cols, rows); k++) {
+    if (k < rows) for (let c = 0; c < Math.min(k, cols); c++) yield place(c, k);
+    if (k < cols) for (let r = 0; r <= Math.min(k, rows - 1); r++) yield place(k, r);
   }
 
   // The extra columns sit over the chat; hovering its tabs moves them out of the way (see camsMoveAway.ts)

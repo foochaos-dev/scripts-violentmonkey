@@ -8,7 +8,7 @@ A userscript to improve Bateworld's VidChat experience. It adds features like:
 - **Cam gestures**: scroll for volume, pinch to zoom, drag to look around
 - **"Watching me" stats**: your record audience, and more
 
-See what changed in each version in the [changelog](CHANGELOG.md).
+See how to [install it](INSTALL.md), and what changed in each version in the [changelog](CHANGELOG.md).
 
 ---
 ### How to use
