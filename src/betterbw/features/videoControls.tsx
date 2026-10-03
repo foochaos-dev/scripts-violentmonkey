@@ -1,3 +1,5 @@
+import { render, type ComponentChildren } from 'preact';
+import { useLayoutEffect, useState } from 'preact/hooks';
 import videoControlsCss from '../styles/videoControls.css?raw';
 import { clamp } from '../utils/math';
 import { upwardPx } from '../utils/wheel';
@@ -42,23 +44,6 @@ function volumeOnScroll(video: HTMLVideoElement) {
   };
 }
 
-function makeButton(title: string, onClick: () => void) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.title = title;
-  button.addEventListener('click', (event) => {
-    event.stopPropagation();
-    onClick();
-  });
-  return button;
-}
-
-function setIcon(button: HTMLElement, name: string) {
-  if (button.dataset.icon === name) return;
-  button.dataset.icon = name;
-  button.innerHTML = `<i class="fa fa-${name}"></i>`;
-}
-
 /** Shows the bar while the pointer moves over the cam, and hides it after a while (unless over the bar, or paused) */
 function autoHide(container: HTMLElement, bar: HTMLElement, video: HTMLVideoElement) {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -101,35 +86,115 @@ export type ZoomControls = {
   getState: () => ZoomState;
 };
 
-/** `+` and `-`, stacked above the full screen button */
-function makeZoomButtons(zoom: ZoomControls) {
-  const zoomIn = makeButton('Zoom in', zoom.zoomIn);
-  const zoomOut = makeButton('Zoom out', zoom.zoomOut);
-  setIcon(zoomIn, 'plus');
-  setIcon(zoomOut, 'minus');
+const Icon = ({ name }: { name: string }) => <i class={`fa fa-${name}`} />;
 
-  const sync = () => {
-    zoomIn.disabled = !zoom.canZoomIn();
-    zoomOut.disabled = !zoom.isZoomed();
-  };
-  zoom.onChange(sync);
-  sync();
+/** `stopPropagation`: a click on the controls must not reach the video, nor the panel behind it */
+const Button = ({
+  title,
+  onClick,
+  disabled,
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ComponentChildren;
+}) => (
+  <button
+    type="button"
+    title={title}
+    disabled={disabled}
+    onClick={(event) => {
+      event.stopPropagation();
+      onClick();
+    }}
+  >
+    {children}
+  </button>
+);
 
-  const buttons = document.createElement('div');
-  buttons.className = 'bbw-zoom-controls';
-  buttons.append(zoomIn, zoomOut);
-  return buttons;
+const toggleFullscreen = (container: HTMLElement) =>
+  document.fullscreenElement === container ? document.exitFullscreen() : container.requestFullscreen();
+
+const VIDEO_EVENTS = ['play', 'pause', 'volumechange'];
+
+/**
+ * Re-renders the bar on everything it reflects, so it always shows the video's current state.
+ * Subscribes on layout, not on paint, so nothing that happens between the mount and the first frame is missed.
+ * Nothing is torn down: the controls live as long as the cam's panel, and `onChange` has no counterpart.
+ */
+function useVideoState(video: HTMLVideoElement, container: HTMLElement, zoom: ZoomControls) {
+  const [, setVersion] = useState(0);
+
+  useLayoutEffect(() => {
+    const rerender = () => setVersion((version) => version + 1);
+    for (const type of VIDEO_EVENTS) video.addEventListener(type, rerender);
+    container.addEventListener('fullscreenchange', rerender);
+    zoom.onChange(rerender);
+  }, []);
 }
 
-/** To the left of the zoom controls, aligned with the bottom of that stack (the zoom out button) */
-function makeRotateButton(onRotate: () => void) {
-  const rotate = makeButton('Rotate', onRotate);
-  rotate.textContent = '⟳';
+/** Same layout as the native controls: play on the left, volume and full screen on the right */
+function Controls({
+  video,
+  container,
+  zoom,
+  onRotate,
+}: {
+  video: HTMLVideoElement;
+  container: HTMLElement;
+  zoom: ZoomControls;
+  onRotate: () => void;
+}) {
+  useVideoState(video, container, zoom);
 
-  const group = document.createElement('div');
-  group.className = 'bbw-rotate';
-  group.append(rotate);
-  return group;
+  return (
+    <>
+      <Button title="Play / pause" onClick={() => (video.paused ? video.play() : video.pause())}>
+        <Icon name={video.paused ? 'play' : 'pause'} />
+      </Button>
+      <span class="bbw-spacer" />
+      <Button
+        title="Mute"
+        onClick={() => {
+          video.muted = !video.muted;
+        }}
+      >
+        <Icon name={video.muted || video.volume === 0 ? 'volume-off' : 'volume-up'} />
+      </Button>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        title={'Volume\nScroll over the controls to adjust it'}
+        value={String(video.muted ? 0 : toPosition(video.volume))}
+        onInput={(event) => {
+          video.muted = false;
+          video.volume = toVolume(Number(event.currentTarget.value));
+        }}
+      />
+      <Button title={'Full screen\nor double-click the cam'} onClick={() => toggleFullscreen(container)}>
+        <Icon name={document.fullscreenElement === container ? 'compress' : 'expand'} />
+      </Button>
+      {/* Hugs the right edge, above the bar; rotate sits to the left of the `+` and `-` it aligns with */}
+      <div class="bbw-floating-controls">
+        <div class="bbw-rotate">
+          <Button title="Rotate" onClick={onRotate}>
+            ⟳
+          </Button>
+        </div>
+        <div class="bbw-zoom-controls">
+          <Button title="Zoom in" onClick={zoom.zoomIn} disabled={!zoom.canZoomIn()}>
+            <Icon name="plus" />
+          </Button>
+          <Button title="Zoom out" onClick={zoom.zoomOut} disabled={!zoom.isZoomed()}>
+            <Icon name="minus" />
+          </Button>
+        </div>
+      </div>
+    </>
+  );
 }
 
 /**
@@ -155,45 +220,11 @@ export function attachVideoControls(video: HTMLVideoElement, zoom: ZoomControls,
 
   const bar = document.createElement('div');
   bar.className = 'bbw-controls';
-
-  const play = makeButton('Play / pause', () => (video.paused ? video.play() : video.pause()));
-  const mute = makeButton('Mute', () => {
-    video.muted = !video.muted;
-  });
-  const volume = document.createElement('input');
-  volume.type = 'range';
-  volume.min = '0';
-  volume.max = '1';
-  volume.step = '0.01';
-  volume.title = 'Volume\nScroll over the controls to adjust it';
-  volume.addEventListener('input', () => {
-    video.muted = false;
-    video.volume = toVolume(Number(volume.value));
-  });
-  const spacer = document.createElement('span');
-  spacer.className = 'bbw-spacer';
-  const toggleFullscreen = () => (document.fullscreenElement === container ? document.exitFullscreen() : container.requestFullscreen());
-  const fullscreen = makeButton('Full screen\nor double-click the cam', toggleFullscreen);
-  // Like the native controls did
-  video.addEventListener('dblclick', toggleFullscreen);
-
-  const floating = document.createElement('div');
-  floating.className = 'bbw-floating-controls';
-  floating.append(makeRotateButton(onRotate), makeZoomButtons(zoom));
-
-  // Same layout as the native controls: play on the left, volume and full screen on the right
-  bar.append(play, spacer, mute, volume, fullscreen, floating);
   container.appendChild(bar);
+  render(<Controls video={video} container={container} zoom={zoom} onRotate={onRotate} />, bar);
 
-  const sync = () => {
-    setIcon(play, video.paused ? 'play' : 'pause');
-    setIcon(mute, video.muted || video.volume === 0 ? 'volume-off' : 'volume-up');
-    setIcon(fullscreen, document.fullscreenElement === container ? 'compress' : 'expand');
-    volume.value = String(video.muted ? 0 : toPosition(video.volume));
-  };
-  for (const type of ['play', 'pause', 'volumechange']) video.addEventListener(type, sync);
-  container.addEventListener('fullscreenchange', sync);
-  sync();
+  // Like the native controls did
+  video.addEventListener('dblclick', () => toggleFullscreen(container));
 
   autoHide(container, bar, video);
 

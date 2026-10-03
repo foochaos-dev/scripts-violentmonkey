@@ -3,6 +3,23 @@
 All notable changes to Better BW are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.10.0] - 2026-09-20
+
+### Added
+
+- A bookmarklet (`bookmarklet.js`) as an alternative to installing a userscript manager. It stays tiny: it fetches the latest `shimmonkey.js` from the git repo and hands it the version published on Sleazy Fork. Shimmonkey stands in for the userscript manager: it loads the `@require`d dependencies, provides the `GM_*`/`GM.*` storage and style APIs (backed by `localStorage`) and runs the script in every window it `@match`es, including the chat's iframe. It won't re-run where it's already running, and leaves a real userscript manager's `GM_*`/`GM.*` alone if one already installed them there. The build minifies the bookmarklet into a ready-to-paste `javascript:` one-liner (`dist/static/js/bookmarklet.min.js`)
+
+### Fixed
+
+- Cams couldn't be opened when the script started after a room was already picked (as it does from the bookmarklet): it kept waiting for the room selection window to show up, closing every cam until then
+- Review the panel size logic to avoid black bars around the video.
+- Zoom in & out in smaller steps
+
+### Internal
+
+- The cams' controls bar (play/pause, mute, volume, full screen, rotate, zoom) is now written with Preact components (`videoControls.ts` → `videoControls.tsx`) instead of hand-built DOM. It re-renders on the video's `play`, `pause` and `volumechange` events, on full screen changes and on zoom changes, so its state can no longer get out of sync. No visible change
+
+
 ## [1.9.1] - 2026-09-20
 
 ### Changed

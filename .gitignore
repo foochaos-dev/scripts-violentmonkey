@@ -4,3 +4,4 @@
 /dist/**
 !/dist/**/
 !/dist/**/*.user.js
+!/dist/**/bookmarklet.min.js

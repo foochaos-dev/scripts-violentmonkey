@@ -11,7 +11,11 @@ export const LAYOUT_LABELS: Record<LayoutName, string> = {
 
 const base = { my: 'right-top', at: 'right-top' };
 
-export const panelRatio = 314 / 365;
+// The panel is a fixed-height header over a body the video fills; only the body scales with the width
+const HEADER_HEIGHT = 22;
+const BODY_RATIO = (314 - HEADER_HEIGHT) / 365;
+export const panelHeight = (width: number) => width * BODY_RATIO + HEADER_HEIGHT;
+const panelWidth = (height: number) => (height - HEADER_HEIGHT) / BODY_RATIO;
 
 export const gridconf = {
   MARGIN_TOP: 30,
@@ -20,7 +24,7 @@ export const gridconf = {
   GAP_Y: 4,
   // The adaptable grid's max size; stored as the input's string value
   WIDTH: +GM_getValue('config.webcamWidth', 365),
-  HEIGHT: +GM_getValue('config.webcamWidth', 365) * panelRatio,
+  HEIGHT: panelHeight(+GM_getValue('config.webcamWidth', 365)),
 };
 
 const MIN_WIDTH = 120;
@@ -33,7 +37,7 @@ type Layout = { width: number; height: number; cols: number; rows: number };
 /** Fixed size: 3 columns by 3 rows beside the chat, then extra columns over it */
 function classicLayout(): Layout {
   const width = getSetting('classicWidth');
-  return { width, height: width * panelRatio, cols: BASE_COLS, rows: CLASSIC_ROWS };
+  return { width, height: panelHeight(width), cols: BASE_COLS, rows: CLASSIC_ROWS };
 }
 
 /** The chosen number of rows fills the window's height (up to the max size), with as many columns as fit beside the chat */
@@ -43,9 +47,9 @@ function adaptableLayout(): Layout {
   const areaHeight = innerHeight - gridconf.MARGIN_TOP;
   const rows = clamp(1, getSetting('adaptableRows'), MAX_ROWS);
   const fitHeight = (areaHeight - (rows - 1) * gridconf.GAP_Y) / rows;
-  const width = Math.floor(Math.max(MIN_WIDTH, Math.min(gridconf.WIDTH, areaWidth, fitHeight / panelRatio)));
+  const width = Math.floor(Math.max(MIN_WIDTH, Math.min(gridconf.WIDTH, areaWidth, panelWidth(fitHeight))));
   const cols = Math.max(1, Math.floor((areaWidth + gridconf.GAP_X) / (width + gridconf.GAP_X)));
-  return { width, height: width * panelRatio, cols, rows };
+  return { width, height: panelHeight(width), cols, rows };
 }
 
 export const computeLayout = (): Layout => (getSetting('layout') === 'classic' ? classicLayout() : adaptableLayout());

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Better bateworld.com
 // @namespace   Circlejerk Scripts
-// @version     1.9.1
+// @version     1.10.0
 // @author      Thick Bro
 // @match       https://bateworld.com/html5-chat/chatroom.php
 // @match       https://bateworld.com//html5-chat/chat2/*
@@ -89,28 +89,28 @@ function setSiteOption(key, value) {
 
 const LAYOUT_LABELS = { classic: "Classic grid (3 rows)", adaptable: "Adaptable grid (N rows)" };
 const organizePanels_base = { my: "right-top", at: "right-top" };
-const panelRatio = 314 / 365;
+const panelHeight = width => 0.8 * width + 22;
 const gridconf = {
 	MARGIN_TOP: 30,
 	MARGIN_RIGHT: 5,
 	GAP_X: 4,
 	GAP_Y: 4,
 	WIDTH: +GM_getValue("config.webcamWidth", 365),
-	HEIGHT: GM_getValue("config.webcamWidth", 365) * panelRatio,
+	HEIGHT: 0.8 * GM_getValue("config.webcamWidth", 365) + 22,
 };
 const MAX_ROWS = 8;
 function classicLayout() {
 	const width = getSetting("classicWidth");
-	return { width, height: width * panelRatio, cols: 3, rows: 3 };
+	return { width, height: 0.8 * width + 22, cols: 3, rows: 3 };
 }
 function adaptableLayout() {
 	const areaWidth = innerWidth - (document.getElementById("tabsAndFooter")?.getBoundingClientRect().right ?? 0) - gridconf.MARGIN_RIGHT;
 	const areaHeight = innerHeight - gridconf.MARGIN_TOP;
 	const rows = clamp(1, getSetting("adaptableRows"), 8);
 	const fitHeight = (areaHeight - (rows - 1) * gridconf.GAP_Y) / rows;
-	const width = Math.floor(Math.max(120, Math.min(gridconf.WIDTH, areaWidth, fitHeight / panelRatio)));
+	const width = Math.floor(Math.max(120, Math.min(gridconf.WIDTH, areaWidth, (fitHeight - 22) / 0.8)));
 	const cols = Math.max(1, Math.floor((areaWidth + gridconf.GAP_X) / (width + gridconf.GAP_X)));
-	return { width, height: width * panelRatio, cols, rows };
+	return { width, height: 0.8 * width + 22, cols, rows };
 }
 const computeLayout = () => ("classic" === getSetting("layout") ? classicLayout() : adaptableLayout());
 function camsWidth() {
@@ -466,6 +466,8 @@ function upwardPx(event) {
 	return (event.webkitDirectionInvertedFromDevice ?? IS_MAC) ? deltaPx(event) : -deltaPx(event);
 }
 
+const { useState, useLayoutEffect, useEffect, useRef } = window.preactHooks;
+
 // file://./src/betterbw/styles/videoControls.css?raw
 const vc_css = `
 .bbw-controls {
@@ -523,10 +525,16 @@ const vc_css = `
 		flex-direction: column;
 		border-radius: 4px;
 		background: rgba(0, 0, 0, 0.5);
-		button {
-			line-height: 22px;
-			font-size: 11px;
-		}
+	}
+	.bbw-zoom-controls button {
+		line-height: 22px;
+		font-size: 11px;
+	}
+	.bbw-rotate button {
+		line-height: 22px;
+		font-size: 15px;
+		margin-top: -2.5px;
+		padding-bottom: 2.5px;
 	}
 	input[type='range'] {
 		width: 70px;
@@ -545,7 +553,7 @@ const vc_css = `
 }
 `;
 
-// file://./src/betterbw/features/videoControls.ts
+// file://./src/betterbw/features/videoControls.tsx
 
 let styleAdded = false;
 function volumeOnScroll(video) {
@@ -566,21 +574,6 @@ function volumeOnScroll(video) {
 		target = clamp(0, (target ?? video.volume ** 0.3333333333333333) + upward / 6000, 1);
 		if (idle) requestAnimationFrame(step);
 	};
-}
-function makeButton(title, onClick) {
-	const button = document.createElement("button");
-	button.type = "button";
-	button.title = title;
-	button.addEventListener("click", event => {
-		event.stopPropagation();
-		onClick();
-	});
-	return button;
-}
-function setIcon(button, name) {
-	if (button.dataset.icon === name) return;
-	button.dataset.icon = name;
-	button.innerHTML = `<i class="fa fa-${name}"></i>`;
 }
 function autoHide(container, bar, video) {
 	let timer;
@@ -610,29 +603,78 @@ function autoHide(container, bar, video) {
 	video.addEventListener("pause", show);
 	if (video.paused) bar.classList.add("visible");
 }
-function makeZoomButtons(zoom) {
-	const zoomIn = makeButton("Zoom in", zoom.zoomIn);
-	const zoomOut = makeButton("Zoom out", zoom.zoomOut);
-	setIcon(zoomIn, "plus");
-	setIcon(zoomOut, "minus");
-	const sync = () => {
-		zoomIn.disabled = !zoom.canZoomIn();
-		zoomOut.disabled = !zoom.isZoomed();
-	};
-	zoom.onChange(sync);
-	sync();
-	const buttons = document.createElement("div");
-	buttons.className = "bbw-zoom-controls";
-	buttons.append(zoomIn, zoomOut);
-	return buttons;
+const Icon = ({ name }) => h("i", { class: `fa fa-${name}` });
+const Button = ({ title, onClick, disabled, children }) =>
+	h(
+		"button",
+		{
+			type: "button",
+			title: title,
+			disabled: disabled,
+			onClick: event => {
+				event.stopPropagation();
+				onClick();
+			},
+		},
+		children,
+	);
+const toggleFullscreen = container => (document.fullscreenElement === container ? document.exitFullscreen() : container.requestFullscreen());
+const VIDEO_EVENTS = ["play", "pause", "volumechange"];
+function useVideoState(video, container, zoom) {
+	const [, setVersion] = useState(0);
+	useLayoutEffect(() => {
+		const rerender = () => setVersion(version => version + 1);
+		for (const type of VIDEO_EVENTS) video.addEventListener(type, rerender);
+		container.addEventListener("fullscreenchange", rerender);
+		zoom.onChange(rerender);
+	}, []);
 }
-function makeRotateButton(onRotate) {
-	const rotate = makeButton("Rotate", onRotate);
-	rotate.textContent = "⟳";
-	const group = document.createElement("div");
-	group.className = "bbw-rotate";
-	group.append(rotate);
-	return group;
+function Controls({ video, container, zoom, onRotate }) {
+	useVideoState(video, container, zoom);
+	return h(
+		Fragment,
+		null,
+		h(Button, { title: "Play / pause", onClick: () => (video.paused ? video.play() : video.pause()) }, h(Icon, { name: video.paused ? "play" : "pause" })),
+		h("span", { class: "bbw-spacer" }),
+		h(
+			Button,
+			{
+				title: "Mute",
+				onClick: () => {
+					video.muted = !video.muted;
+				},
+			},
+			h(Icon, { name: video.muted || 0 === video.volume ? "volume-off" : "volume-up" }),
+		),
+		h("input", {
+			type: "range",
+			min: "0",
+			max: "1",
+			step: "0.01",
+			title: "Volume\nScroll over the controls to adjust it",
+			value: String(video.muted ? 0 : video.volume ** 0.3333333333333333),
+			onInput: event => {
+				video.muted = false;
+				video.volume = Number(event.currentTarget.value) ** 3;
+			},
+		}),
+		h(
+			Button,
+			{ title: "Full screen\nor double-click the cam", onClick: () => toggleFullscreen(container) },
+			h(Icon, { name: document.fullscreenElement === container ? "compress" : "expand" }),
+		),
+		h(
+			"div",
+			{ class: "bbw-floating-controls" },
+			h("div", { class: "bbw-rotate" }, h(Button, { title: "Rotate", onClick: onRotate }, "⟳")),
+			h(
+				"div",
+				{ class: "bbw-zoom-controls" },
+				h(Button, { title: "Zoom in", onClick: zoom.zoomIn, disabled: !zoom.canZoomIn() }, h(Icon, { name: "plus" })),
+				h(Button, { title: "Zoom out", onClick: zoom.zoomOut, disabled: !zoom.isZoomed() }, h(Icon, { name: "minus" })),
+			),
+		),
+	);
 }
 function attachVideoControls(video, zoom, onRotate) {
 	if (!styleAdded) {
@@ -647,39 +689,9 @@ function attachVideoControls(video, zoom, onRotate) {
 	if ("static" === getComputedStyle(container).position) container.style.position = "relative";
 	const bar = document.createElement("div");
 	bar.className = "bbw-controls";
-	const play = makeButton("Play / pause", () => (video.paused ? video.play() : video.pause()));
-	const mute = makeButton("Mute", () => {
-		video.muted = !video.muted;
-	});
-	const volume = document.createElement("input");
-	volume.type = "range";
-	volume.min = "0";
-	volume.max = "1";
-	volume.step = "0.01";
-	volume.title = "Volume\nScroll over the controls to adjust it";
-	volume.addEventListener("input", () => {
-		video.muted = false;
-		video.volume = Number(volume.value) ** 3;
-	});
-	const spacer = document.createElement("span");
-	spacer.className = "bbw-spacer";
-	const toggleFullscreen = () => (document.fullscreenElement === container ? document.exitFullscreen() : container.requestFullscreen());
-	const fullscreen = makeButton("Full screen\nor double-click the cam", toggleFullscreen);
-	video.addEventListener("dblclick", toggleFullscreen);
-	const floating = document.createElement("div");
-	floating.className = "bbw-floating-controls";
-	floating.append(makeRotateButton(onRotate), makeZoomButtons(zoom));
-	bar.append(play, spacer, mute, volume, fullscreen, floating);
 	container.appendChild(bar);
-	const sync = () => {
-		setIcon(play, video.paused ? "play" : "pause");
-		setIcon(mute, video.muted || 0 === video.volume ? "volume-off" : "volume-up");
-		setIcon(fullscreen, document.fullscreenElement === container ? "compress" : "expand");
-		volume.value = String(video.muted ? 0 : video.volume ** 0.3333333333333333);
-	};
-	for (const type of ["play", "pause", "volumechange"]) video.addEventListener(type, sync);
-	container.addEventListener("fullscreenchange", sync);
-	sync();
+	preact.render(h(Controls, { video: video, container: container, zoom: zoom, onRotate: onRotate }), bar);
+	video.addEventListener("dblclick", () => toggleFullscreen(container));
 	autoHide(container, bar, video);
 	const onVolumeWheel = volumeOnScroll(video);
 	bar.addEventListener(
@@ -757,8 +769,8 @@ function zoomAndPan(video, initial) {
 		onPanWheel: event => {
 			moveTo(video.getBoundingClientRect(), x - event.deltaX * unitPx(event.deltaMode), y - deltaPx(event));
 		},
-		zoomIn: () => zoomAt(video.getBoundingClientRect(), 0, 0, 1.25),
-		zoomOut: () => zoomAt(video.getBoundingClientRect(), 0, 0, 0.8),
+		zoomIn: () => zoomAt(video.getBoundingClientRect(), 0, 0, 1.1),
+		zoomOut: () => zoomAt(video.getBoundingClientRect(), 0, 0, 0.9090909090909091),
 		isZoomed: () => scale > 1,
 		canZoomIn: () => scale < 4,
 		onChange: listener => listeners.add(listener),
@@ -1070,8 +1082,6 @@ function observeIt({ target, selector, forEachAddedNode, forEachRemovedNode, cle
 	};
 }
 
-const { useState, useEffect, useRef } = window.preactHooks;
-
 // file://./src/betterbw/features/globalActions.tsx
 
 const ALGO_DESCRIPTIONS = {
@@ -1235,9 +1245,6 @@ const cma_css = `
 }
 .jsPanel:is(.ui-draggable-dragging, .bbw-dragging) {
 	translate: none;
-}
-.jsPanel.bbw-peeking {
-	z-index: 99 !important;
 }
 `;
 
@@ -1829,7 +1836,7 @@ function PanelSizeInput() {
 			defaultValue: gridconf.WIDTH,
 			onChangeEffect: value => {
 				gridconf.WIDTH = +value;
-				gridconf.HEIGHT = value * panelRatio;
+				gridconf.HEIGHT = panelHeight(+value);
 				clickOnCurrentAlgoButton();
 			},
 		}),
@@ -2844,7 +2851,7 @@ input.numberOfCams {
 	}
 }
 #tabs .tab-pane.tab-pane {
-	padding: 10px 10px 10px 20px !important;
+	padding: 10px 10px 10px 15px !important;
 }
 #tabs .addPrivateMessage {
 	.mention,
@@ -3138,7 +3145,11 @@ async function main() {
 	sweepExpiredCooldowns();
 	setupResponsiveLayout();
 	observeChatNav();
-	const roomSelected = waitToBe("#roomsModal", ["aria-hidden"], el => "false" === el.getAttribute("aria-hidden")).then(() => waitToBe("#roomsModal"));
+	const roomSelected = (
+		chatHTML5.config?.displayRoomsChoiceWhenEnterChat === 0
+			? Promise.resolve()
+			: waitToBe("#roomsModal", ["aria-hidden"], el => "false" === el.getAttribute("aria-hidden"))
+	).then(() => waitToBe("#roomsModal"));
 	closeCamsUntil(roomSelected);
 	observePanels();
 	setupCamsMoveAway();

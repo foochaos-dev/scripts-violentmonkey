@@ -1,4 +1,4 @@
-/* Replaces the native controls bar of the cams (see videoControls.ts) */
+/* Replaces the native controls bar of the cams (see videoControls.tsx) */
 .bbw-controls {
   position: absolute;
   z-index: 2;
@@ -65,12 +65,19 @@
     flex-direction: column;
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.5);
-
-    button {
-      line-height: 22px;
-      font-size: 11px;
-    }
   }
+  .bbw-zoom-controls button {
+    line-height: 22px;
+    font-size: 11px;
+  }
+
+  .bbw-rotate button {
+    line-height: 22px;
+    font-size: 15px;
+    margin-top: -2.5px;
+    padding-bottom: 2.5px;
+  }
+
 
   input[type='range'] {
     width: 70px;

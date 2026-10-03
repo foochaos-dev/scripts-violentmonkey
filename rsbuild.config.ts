@@ -2,6 +2,7 @@ import { defineConfig, rspack } from '@rsbuild/core';
 import { getManifest } from './manifest';
 import { RuleJSTS, RuleSCSS } from './rsbuild.PrettierLoader';
 import { StripBlankLinesPlugin } from './rsbuild.StripBlankLinesPlugin';
+import { MinifyBookmarkletPlugin } from './rsbuild.MinifyBookmarkletPlugin';
 
 export default defineConfig({
   mode: 'production', // concatenate modules even on `rsbuild watch`
@@ -20,6 +21,7 @@ export default defineConfig({
 
       plugins: [
         StripBlankLinesPlugin(),
+        MinifyBookmarkletPlugin(),
         new rspack.BannerPlugin({
           banner: getManifest(),
           raw: true, // false = wraps into a comment

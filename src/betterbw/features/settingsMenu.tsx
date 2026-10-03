@@ -11,7 +11,7 @@ import {
 } from './settings';
 import { ALGO_DESCRIPTIONS, clickOnCurrentAlgoButton, runAlgo } from './globalActions';
 import { getAlgo, type PreferredAlgo } from '../algo';
-import { gridconf, LAYOUT_LABELS, MAX_ROWS, organizePanels, panelRatio, type LayoutName } from '../utils/organizePanels';
+import { gridconf, LAYOUT_LABELS, MAX_ROWS, organizePanels, panelHeight, type LayoutName } from '../utils/organizePanels';
 import { refreshCamsMoveAway } from './camsMoveAway';
 
 const PANEL_WIDTH = 640;
@@ -164,7 +164,7 @@ function PanelSizeInput() {
         defaultValue={gridconf.WIDTH}
         onChangeEffect={(value: string | number) => {
           gridconf.WIDTH = +value;
-          gridconf.HEIGHT = +value * panelRatio;
+          gridconf.HEIGHT = panelHeight(+value);
           clickOnCurrentAlgoButton();
         }}
       />

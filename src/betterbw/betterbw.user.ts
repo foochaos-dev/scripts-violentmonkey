@@ -39,9 +39,13 @@ export async function main() {
   sweepExpiredCooldowns();
   setupResponsiveLayout();
   observeChatNav();
-  const roomSelected = waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false').then(() =>
-    waitToBe('#roomsModal')
-  );
+  // The chat flips this '1' to a numeric 0 as it shows the rooms modal. Already 0 means we started late
+  // (bookmarklet): the modal already showed, so only wait for it to be hidden, not for it to show again.
+  const roomsModalShown =
+    chatHTML5.config?.displayRoomsChoiceWhenEnterChat === 0
+      ? Promise.resolve()
+      : waitToBe('#roomsModal', ['aria-hidden'], (el) => el.getAttribute('aria-hidden') === 'false');
+  const roomSelected = roomsModalShown.then(() => waitToBe('#roomsModal'));
   closeCamsUntil(roomSelected);
   observePanels();
   // Before dragToSwap: its pointerdown handler measures the cams, once this one put them back on their spots

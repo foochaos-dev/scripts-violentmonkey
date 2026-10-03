@@ -86,7 +86,7 @@ const BtnCooldown = ({ panel, getUsername }: BtnProps) => {
 
 // Two separate groups: ratings (top left) and cooldown (top right, aligned with the ratings and with the
 // video's zoom controls) - see .panel-action/.panel-cooldown in static.css. Rotate lives in the video's own
-// controls bar instead (videoControls.ts), next to the zoom controls it needs to align with.
+// controls bar instead (videoControls.tsx), next to the zoom controls it needs to align with.
 export const PanelActions = ({ panel, username }: Pick<BtnProps, 'panel'> & { username: string }) => {
   const props = { panel, getUsername: () => username };
   return (

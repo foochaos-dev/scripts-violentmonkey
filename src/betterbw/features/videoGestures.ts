@@ -4,7 +4,7 @@ import { getSetting } from './settings';
 import { attachVideoControls } from './videoControls';
 
 const MAX_ZOOM = 4;
-const ZOOM_STEP = 1.25; // Per click on the zoom buttons
+const ZOOM_STEP = 1.1; // Per click on the zoom buttons
 const ZOOM_PX_PER_E = 100; // Pinch: matches Chrome's own pinch-to-zoom speed
 const MAX_ZOOM_DELTA_PX = 25;
 const DRAG_THRESHOLD_PX = 3;
@@ -121,7 +121,7 @@ function zoomAndPan(video: HTMLVideoElement, initial?: ZoomState) {
  * Over the video:
  * - pinch zooms into it, instead of zooming the page (so do the zoom buttons on its controls)
  * - once zoomed, drag or scroll to move around, like on a webpage zoomed in on a Mac
- * - clicking does nothing (the native controls, which toggled play/pause, are replaced - see videoControls.ts)
+ * - clicking does nothing (the native controls, which toggled play/pause, are replaced - see videoControls.tsx)
  * Scrolling over its controls bar adjusts the volume.
  */
 export function attachVideoGestures(video: HTMLVideoElement, onRotate: () => void, initial?: ZoomState) {

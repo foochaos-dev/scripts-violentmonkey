@@ -38,7 +38,7 @@ input.numberOfCams {
 /*
  * Two separate groups on the cam panel's header, each with the same transparent-ish, rounded "button group"
  * look as the video's zoom controls (videoControls.css). Rotate lives with those zoom controls instead
- * (videoControls.ts/.css), since it needs to align with them:
+ * (videoControls.tsx/.css), since it needs to align with them:
  * - .panel-action: ratings, top left (unchanged position)
  * - .panel-cooldown: top right, aligned with .panel-action (same top) and the zoom controls (same right)
  */
@@ -166,7 +166,7 @@ input.numberOfCams {
 }
 
 #tabs .tab-pane.tab-pane {
-  padding: 10px 10px 10px 20px !important;
+  padding: 10px 10px 10px 15px !important;
 }
 
 /* #tabs :where(.message, .serverMessage) .userLabel {
